@@ -47,3 +47,11 @@ data/documents/*
 # Keep the folders but not the files
 !public/uploads/.gitkeep
 !data/documents/.gitkeep
+
+
+# ChromaDB local storage
+data/chroma/*
+!data/chroma/.gitkeep
+
+# Transformer models cache
+node_modules/.cache
