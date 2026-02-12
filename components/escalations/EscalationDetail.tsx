@@ -38,7 +38,7 @@ export default function EscalationDetail({
   const [addToKB, setAddToKB] = useState(true);
   const [kbIntegrationType, setKbIntegrationType] = useState<string>('faq');
   const [category, setCategory] = useState(escalation.category || '');
-  const [tags, setTags] = useState(escalation.tags.join(', '));
+  const [tags, setTags] = useState(escalation.tags?.join(', ') || '');
   const [assignTo, setAssignTo] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);

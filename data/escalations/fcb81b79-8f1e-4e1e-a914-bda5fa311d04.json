@@ -1,0 +1,72 @@
+{
+  "id": "fcb81b79-8f1e-4e1e-a914-bda5fa311d04",
+  "conversationId": "89cf428f-763c-4cbb-acd4-8f7b42972ae2",
+  "userQuestion": "how to work",
+  "context": [
+    {
+      "role": "assistant",
+      "content": "**🙋 Human Expert Response:**\n\nnarendra modi\n\n*Resolved by: dhruv*",
+      "timestamp": "2026-01-24T13:21:03.825Z"
+    },
+    {
+      "role": "user",
+      "content": "hello what you do",
+      "timestamp": "2026-02-12T20:04:01.988Z"
+    },
+    {
+      "role": "assistant",
+      "content": "According to Company-Policy-and-Procedure-June-1.18-V6.0.pdf:\n\nThe document describes various functions and responsibilities, indicating that the entity (likely an individual or a team within Triage Logic) performs the following:\n\n*   **Business Understanding and Improvement:**\n    *   Understands the business structure, products, and services of each company in the Triage Logic group.\n    *   Consistently seeks improvement in processes and quality of output.\n    *   Accepts changes in direction readily and alters plans to meet new goals set by a supervisor or team.\n\n*   **Communication and Information Handling:**\n    *   Composes memos, reports, and documentation that are clear, well-organized, and grammatical, accurately transmitting instructions or messages in a written form.\n    *   Processes incoming information and inquiries by directing mail, calls, and visitors accurately and efficiently.\n    *   Answers telephones promptly and courteously.\n    *   Greets clients in a professional manner and maintains confidentiality.\n\n*   **Record Keeping and Problem Solving:**\n    *   Creates and maintains well-organized files.\n    *   Maintains complete and accurate records that can be readily accessed when information is needed.\n    *   Determines and obtains the information needed to solve a problem within their own scope of work.\n    *   Applies rules and standards to decisions, weighs alternatives, and selects the best solution.\n    *   Asks managers or supervisors when a decision is beyond their own scope of work.\n\n*   **Time and Task Management:**\n    *   Manages time effectively to meet assigned deadlines.\n    *   Implements follow-up.\n    *   Balances special projects with routine work.\n    *   Effectively coordinates tasks amongst team members and/or vendors.\n\n*   **Leadership (for Supervisory Roles):**\n    *   Leads by personal example, demonstrating the goals and priorities of the company, and inspiring people to believe they can make a significant contribution.",
+      "timestamp": "2026-02-12T20:04:11.585Z"
+    },
+    {
+      "role": "assistant",
+      "content": "**🙋 Human Expert Response:**\n\nwork\n\n*Resolved by: hh*",
+      "timestamp": "2026-02-12T20:06:31.617Z"
+    },
+    {
+      "role": "user",
+      "content": "how to work",
+      "timestamp": "2026-02-12T20:07:29.713Z"
+    },
+    {
+      "role": "assistant",
+      "content": "According to Company-Policy-and-Procedure-June-1.18-V6.0.pdf:\n\nTo work effectively within the described framework, individuals are expected to demonstrate various qualities and abilities, encompassing interpersonal skills, reliability, collaboration, a commitment to excellence, individual competency, and effective management of time and tasks.\n\n**Compassion**\n*   Demonstrates care for coworkers, clients, and patients.\n*   Develops and maintains positive and harmonious relationships with supervisors, coworkers, and clients.\n*   Tactfully handles sensitive situations.\n*   Is able to identify and respond to customer needs.\n*   Demonstrates diplomacy and patience in dealing with customers.\n\n**Reliability**\n*   Consistently provides good quality.\n*   Steps in to help when necessary.\n*   Can be relied upon to carry out instructions, work with limited supervision, and be a self-starter.\n*   Accepts new assignments and responsibilities willingly.\n*   Is ready to perform at the beginning of their shift or, if on a flexible schedule, keeps enough common hours to facilitate teamwork.\n\n**Collaboration**\n*   Communicates with others to achieve the team’s common goals.\n*   Asks for help when necessary.\n*   Shows appreciation for help and suggestions.\n*   Is flexible and willing to try new ideas and processes.\n\n**Excellence**\n*   Aspires to be their best by setting goals.\n*   Demonstrates commitment to achieving the goals.\n*   Shows initiative to grow and learn new skills.\n*   Is organized within their field by being able to meet deadlines, communicate, or perform tasks effectively and without errors.\n\n**Competency: Individual Ability and Knowledge**\n*   Demonstrates technical literacy by learning and applying new technologies to their job, soliciting the support of systems applications to optimize work.\n*   Understands the business structure, products, and services of each company in the Triage Logic group.\n*   Has flexibility to consistently seek improvement in processes and quality of output.\n*   Accepts changes in direction readily and alters plans to meet new goals set by a supervisor or team.\n*   Composes memos, reports, and documentation that are clear, well-organized, and grammatical, accurately transmitting instructions or messages in a written form.\n*   Processes incoming information and inquiries by directing mail, calls, and visitors accurately and efficiently.\n*   Answers telephones promptly and courteously.\n*   Greets clients in a professional manner and maintains confidentiality.\n*   Creates and maintains well-organized files.\n*   Maintains complete and accurate records that can be readily accessed when information is needed.\n*   Determines and obtains the information needed to solve a problem within their own scope of work.\n*   Applies rules and standards to decisions.\n*   Weighs alternatives and selects the best solution.\n*   Asks managers or supervisors when a decision is beyond their own scope of work.\n\n**Management: Time Management**\n*   Manages time effectively to meet assigned deadlines.\n*   Implements follow-up.\n*   Balances special projects with routine work.\n*   Effectively coordinates tasks amongst team members and/or vendors.\n\n**Management: Supervisory Oversight**\n*   Leads by personal example, demonstrating the goals and priorities of the company, inspiring people to believe they can make a significant contribution.",
+      "timestamp": "2026-02-12T20:07:35.157Z"
+    }
+  ],
+  "attemptedAnswer": "According to Company-Policy-and-Procedure-June-1.18-V6.0.pdf:\n\nTo work effectively within the described framework, individuals are expected to demonstrate various qualities and abilities, encompassing interpersonal skills, reliability, collaboration, a commitment to excellence, individual competency, and effective management of time and tasks.\n\n**Compassion**\n*   Demonstrates care for coworkers, clients, and patients.\n*   Develops and maintains positive and harmonious relationships with supervisors, coworkers, and clients.\n*   Tactfully handles sensitive situations.\n*   Is able to identify and respond to customer needs.\n*   Demonstrates diplomacy and patience in dealing with customers.\n\n**Reliability**\n*   Consistently provides good quality.\n*   Steps in to help when necessary.\n*   Can be relied upon to carry out instructions, work with limited supervision, and be a self-starter.\n*   Accepts new assignments and responsibilities willingly.\n*   Is ready to perform at the beginning of their shift or, if on a flexible schedule, keeps enough common hours to facilitate teamwork.\n\n**Collaboration**\n*   Communicates with others to achieve the team’s common goals.\n*   Asks for help when necessary.\n*   Shows appreciation for help and suggestions.\n*   Is flexible and willing to try new ideas and processes.\n\n**Excellence**\n*   Aspires to be their best by setting goals.\n*   Demonstrates commitment to achieving the goals.\n*   Shows initiative to grow and learn new skills.\n*   Is organized within their field by being able to meet deadlines, communicate, or perform tasks effectively and without errors.\n\n**Competency: Individual Ability and Knowledge**\n*   Demonstrates technical literacy by learning and applying new technologies to their job, soliciting the support of systems applications to optimize work.\n*   Understands the business structure, products, and services of each company in the Triage Logic group.\n*   Has flexibility to consistently seek improvement in processes and quality of output.\n*   Accepts changes in direction readily and alters plans to meet new goals set by a supervisor or team.\n*   Composes memos, reports, and documentation that are clear, well-organized, and grammatical, accurately transmitting instructions or messages in a written form.\n*   Processes incoming information and inquiries by directing mail, calls, and visitors accurately and efficiently.\n*   Answers telephones promptly and courteously.\n*   Greets clients in a professional manner and maintains confidentiality.\n*   Creates and maintains well-organized files.\n*   Maintains complete and accurate records that can be readily accessed when information is needed.\n*   Determines and obtains the information needed to solve a problem within their own scope of work.\n*   Applies rules and standards to decisions.\n*   Weighs alternatives and selects the best solution.\n*   Asks managers or supervisors when a decision is beyond their own scope of work.\n\n**Management: Time Management**\n*   Manages time effectively to meet assigned deadlines.\n*   Implements follow-up.\n*   Balances special projects with routine work.\n*   Effectively coordinates tasks amongst team members and/or vendors.\n\n**Management: Supervisory Oversight**\n*   Leads by personal example, demonstrating the goals and priorities of the company, inspiring people to believe they can make a significant contribution.",
+  "confidenceScore": 0.279004268507136,
+  "documentsSearched": 2,
+  "topMatchScore": 0.2852086243311988,
+  "sourcesFound": [
+    {
+      "documentName": "Company-Policy-and-Procedure-June-1.18-V6.0.pdf",
+      "chunkId": "1a2d88e0-9a6a-4595-b2c1-0dbf5cf2ed25",
+      "score": 0.2852086243311988,
+      "text": "n\toutside\tthe\tpresence\tof\tthe\tone\twho\tis\tthe\t\nsubject\tof\tthe\tconversation\t\t\n\t\n\t\t\t\t\t\t\nCompassion\t\n\t\t\t\t\t\t\nDemonstrates\tcare\tfor\tcoworkers,\tclients\tand\tpatients.\t\n\t\t\t\t\t\t\t\t\t\t\t\t\nDevelops\tand\tmaintains\tpositive\tand\tharmonious\trelationships\twith\t\nsupervisors,\tcoworkers\tand\tclients;\ttactfully\thandling\tsensitive\t\nsituations.\t\n\t\t\t\t\t\t\t\t\t\t\t\t\nIs\table\tto\tidentify\tand\trespond\tto\tcustomer\tneeds.\t\n\t\t\t\t\t\t\t\t\t\t\t\t\nDemonstrates\tdiplomacy\tand\tpatience\tin\tdealing\twith\tcustomers.\t\n\t\t\t\t\t\t\t\t\t\t\t\t\nReliability\t\n\t\t\t\t\t\t\nConsis"
+    },
+    {
+      "documentName": "Company-Policy-and-Procedure-June-1.18-V6.0.pdf",
+      "chunkId": "af7119aa-2a07-4577-b45f-58b66fd5ac66",
+      "score": 0.27279991268307313,
+      "text": "ng\tthe\tsupport\tof\tsystems\t\napplications\tto\toptimize\twork.\t\n\t\t\t\t\t\t\t\t\t\t\t\t\nUnderstands\tthe\tbusiness\tstructure,\tproducts\tand\tservices\tof\teach\t\ncompany\tin\tthe\tTriageLogic\tgroup.\t\n\t\t\t\t\t\t\t\t\t\t\t\t\nHas\tflexibility\tto\tconsistently\tseek\timprovement\tin\tprocesses\tand\tquality\t\nof\toutput.\tAccepts\tchanges\tin\tdirection\treadily\tand\talters\tplans\tto\tmeet\t\nnew\tgoals\tset\tby\tsupervisor\tor\tteam.\t\t\t\t\t\t\t\t\t\t\t\t\t\t\nComposes\tmemos,\treports,\tdocumentation\tthat\tare\tclear,\twell-organized,\t\nand\tgrammatical.\tAccurately\ttransmitting\t"
+    }
+  ],
+  "reason": "low_confidence",
+  "urgency": "low",
+  "status": "resolved",
+  "shouldAddToKB": true,
+  "addedToKB": false,
+  "relatedDocuments": [
+    "Company-Policy-and-Procedure-June-1.18-V6.0.pdf",
+    "Company-Policy-and-Procedure-June-1.18-V6.0.pdf"
+  ],
+  "createdAt": "2026-02-12T20:07:54.407Z",
+  "updatedAt": "2026-02-12T20:08:16.868Z",
+  "userNotified": false,
+  "humanAnswer": "where",
+  "resolvedBy": "gg",
+  "resolvedAt": "2026-02-12T20:08:16.865Z",
+  "kbIntegrationType": "faq",
+  "category": "Product Questions"
+}

@@ -147,9 +147,8 @@
   ],
   "reason": "low_confidence",
   "urgency": "low",
-  "tags": [],
-  "status": "pending",
-  "shouldAddToKB": false,
+  "status": "resolved",
+  "shouldAddToKB": true,
   "addedToKB": false,
   "relatedDocuments": [
     "refundpolicy.txt",
@@ -174,6 +173,11 @@
     "refundpolicy.txt"
   ],
   "createdAt": "2026-01-18T20:11:56.647Z",
-  "updatedAt": "2026-01-18T20:11:56.647Z",
-  "userNotified": false
+  "updatedAt": "2026-02-12T20:15:03.313Z",
+  "userNotified": false,
+  "humanAnswer": "hhh",
+  "resolvedBy": "bb",
+  "resolvedAt": "2026-02-12T20:15:03.311Z",
+  "kbIntegrationType": "faq",
+  "category": "Billing & Payments"
 }
