@@ -88,6 +88,7 @@ export default function ChatPage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [documentsCount, setDocumentsCount] = useState(0);
   const [documents, setDocuments] = useState<DocumentOption[]>([]);
+  const [pendingEscalations, setPendingEscalations] = useState<Set<string>>(new Set());
   
   // RAG settings
   const { settings: ragSettings, setSettings: setRagSettings, isLoaded: ragSettingsLoaded } = useRAGSettings();
@@ -107,9 +108,74 @@ export default function ChatPage() {
       document.documentElement.classList.add('dark');
     }
 
-    // Always start fresh with welcome message
-    // (Removed localStorage chat history loading to prevent old messages from appearing)
-    setMessages([WELCOME_MESSAGE]);
+    // Load chat history from localStorage
+    const loadMessages = async () => {
+      try {
+        const savedMessages = localStorage.getItem(STORAGE_KEY);
+        if (savedMessages) {
+          const parsedMessages = JSON.parse(savedMessages);
+          // Restore dates from strings
+          const restoredMessages = parsedMessages.map((msg: Message) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          
+          // Check for unresolved escalations and load resolved ones
+          const pendingEscIds = new Set<string>();
+          const messagesToAdd: Message[] = [];
+          const humanResponseIds = new Set<string>(); // Track human responses already added
+          
+          for (const msg of restoredMessages) {
+            // Skip if this is a human response that we'll re-fetch
+            if (msg.id?.startsWith('human-')) {
+              humanResponseIds.add(msg.id);
+              continue; // We'll add fresh version from API
+            }
+            
+            messagesToAdd.push(msg);
+            
+            // If this message has an escalation ID, check its status
+            if (msg.escalationId) {
+              try {
+                const response = await fetch(`/api/escalations/${msg.escalationId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                  if (data.escalation.status === 'resolved' && data.escalation.humanAnswer) {
+                    // Add human response - always add fresh from API
+                    const humanMsgId = `human-${msg.escalationId}`;
+                    messagesToAdd.push({
+                      id: humanMsgId,
+                      role: 'assistant',
+                      content: `**🙋 Human Expert Response:**\n\n${data.escalation.humanAnswer}\n\n*Resolved by: ${data.escalation.resolvedBy}*`,
+                      timestamp: new Date(data.escalation.resolvedAt),
+                      usedRAG: false
+                    });
+                  } else if (data.escalation.status !== 'resolved' && data.escalation.status !== 'rejected') {
+                    // Still pending/in_progress, add to polling set
+                    pendingEscIds.add(msg.escalationId);
+                  }
+                }
+              } catch (error) {
+                console.error(`Error checking escalation ${msg.escalationId}:`, error);
+                // Add to pending in case of error to retry
+                pendingEscIds.add(msg.escalationId);
+              }
+            }
+          }
+          
+          setMessages(messagesToAdd.length > 0 ? messagesToAdd : [WELCOME_MESSAGE]);
+          setPendingEscalations(pendingEscIds);
+        } else {
+          setMessages([WELCOME_MESSAGE]);
+        }
+      } catch (e) {
+        console.error('Failed to load chat history:', e);
+        setMessages([WELCOME_MESSAGE]);
+      }
+    };
+    
+    loadMessages();
     
     // Fetch documents count for RAG indicator
     fetchDocumentsCount();
@@ -139,17 +205,16 @@ export default function ChatPage() {
 
   // ============================================
   // Save messages to localStorage when they change
-  // (Disabled to prevent old messages from reappearing on reload)
   // ============================================
-  // useEffect(() => {
-  //   if (isInitialized && messages.length > 0) {
-  //     try {
-  //       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-  //     } catch (e) {
-  //       console.error('Failed to save chat history:', e);
-  //     }
-  //   }
-  // }, [messages, isInitialized]);
+  useEffect(() => {
+    if (isInitialized && messages.length > 0) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      } catch (e) {
+        console.error('Failed to save chat history:', e);
+      }
+    }
+  }, [messages, isInitialized]);
 
   // ============================================
   // Auto-scroll to bottom when new messages arrive
@@ -159,6 +224,64 @@ export default function ChatPage() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isLoading]);
+
+  // ============================================
+  // Poll for resolved escalations
+  // ============================================
+  useEffect(() => {
+    if (pendingEscalations.size === 0) return;
+
+    const checkEscalations = async () => {
+      const escalationsToCheck = Array.from(pendingEscalations);
+      
+      for (const escalationId of escalationsToCheck) {
+        try {
+          const response = await fetch(`/api/escalations/${escalationId}`);
+          const data = await response.json();
+          
+          if (data.success && data.escalation.status === 'resolved' && data.escalation.humanAnswer) {
+            // Remove from pending first
+            setPendingEscalations(prev => {
+              const next = new Set(prev);
+              next.delete(escalationId);
+              return next;
+            });
+            
+            // Add human answer as new message (use functional update to get latest messages)
+            setMessages(prev => {
+              // Check if human response already exists
+              const humanResponseExists = prev.some(
+                m => m.id === `human-${escalationId}`
+              );
+              
+              if (humanResponseExists) {
+                return prev; // Don't add duplicate
+              }
+              
+              const humanMessage: Message = {
+                id: `human-${escalationId}`,
+                role: 'assistant',
+                content: `**🙋 Human Expert Response:**\n\n${data.escalation.humanAnswer}\n\n*Resolved by: ${data.escalation.resolvedBy}*`,
+                timestamp: new Date(data.escalation.resolvedAt),
+                usedRAG: false
+              };
+              
+              return [...prev, humanMessage];
+            });
+          }
+        } catch (error) {
+          console.error(`Error checking escalation ${escalationId}:`, error);
+        }
+      }
+    };
+
+    // Poll every 5 seconds
+    const interval = setInterval(checkEscalations, 5000);
+    // Check immediately
+    checkEscalations();
+
+    return () => clearInterval(interval);
+  }, [pendingEscalations]);
 
   // ============================================
   // Toggle dark mode
@@ -411,6 +534,9 @@ export default function ChatPage() {
             ? { ...m, escalationId: data.escalation.id }
             : m
         ));
+        
+        // Add to pending escalations for polling
+        setPendingEscalations(prev => new Set(prev).add(data.escalation.id));
       } else {
         throw new Error(data.error || 'Failed to create escalation');
       }

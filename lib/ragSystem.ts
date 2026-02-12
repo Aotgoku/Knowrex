@@ -1,9 +1,11 @@
 // ============================================
 // RAG System - Retrieval Augmented Generation
 // Connects vector search to Gemini chat
+// Now includes Knowledge Loop FAQ integration!
 // ============================================
 
 import { searchVectors, SearchResult } from './vectorSearch';
+import { searchFAQs, FAQEntry } from './knowledgeLoop';
 
 /**
  * Source information returned with RAG results
@@ -36,6 +38,7 @@ export interface RAGOptions {
   minScore?: number;
   maxContextLength?: number;
   documentId?: string; // Filter by specific document ID
+  includeFAQs?: boolean; // Include FAQ search results (default: true)
 }
 
 /**
@@ -46,6 +49,7 @@ export const RAG_DEFAULTS = {
   topK: 20,  // Get more results for comprehensive answers
   minScore: 0.20,  // Even lower threshold to ensure we don't miss content
   maxContextLength: 30000, // Much larger context for complete answers
+  includeFAQs: true, // Include FAQ search by default
 };
 
 /**
@@ -181,14 +185,44 @@ function formatContext(sources: RAGSource[], maxLength: number): string {
 }
 
 /**
+ * Search FAQs and convert to RAGSource format
+ * FAQs are learned from human-resolved escalations
+ */
+async function searchFAQsForRAG(query: string): Promise<RAGSource[]> {
+  try {
+    const faqs = await searchFAQs(query);
+    
+    if (faqs.length === 0) {
+      return [];
+    }
+    
+    console.log(`[RAG] Found ${faqs.length} matching FAQs from Knowledge Loop`);
+    
+    // Convert FAQs to RAGSource format with high priority
+    return faqs.map((faq, index) => ({
+      documentName: `FAQ: ${faq.category}`,
+      chunkId: faq.id,
+      text: `**Question:** ${faq.question}\n\n**Answer:** ${faq.answer}`,
+      score: 0.85, // High score since FAQs are human-verified answers
+      chunkIndex: index
+    }));
+  } catch (error) {
+    console.error('[RAG] FAQ search error:', error);
+    return [];
+  }
+}
+
+/**
  * Perform RAG - Search documents and build context
  * 
  * Flow:
- * 1. Search vector database for relevant chunks
- * 2. Filter by minimum score
- * 3. Format chunks into context string
- * 4. Calculate confidence metrics
- * 5. Return context + metadata
+ * 1. Search FAQs from Knowledge Loop (learned from escalations)
+ * 2. Search vector database for relevant chunks
+ * 3. Merge and prioritize results (FAQs first)
+ * 4. Filter by minimum score
+ * 5. Format chunks into context string
+ * 6. Calculate confidence metrics
+ * 7. Return context + metadata
  */
 export async function performRAG(
   userQuery: string,
@@ -198,7 +232,8 @@ export async function performRAG(
     topK = RAG_DEFAULTS.topK,
     minScore = RAG_DEFAULTS.minScore,
     maxContextLength = RAG_DEFAULTS.maxContextLength,
-    documentId
+    documentId,
+    includeFAQs = RAG_DEFAULTS.includeFAQs
   } = options || {};
   
   // Empty result template
@@ -224,20 +259,50 @@ export async function performRAG(
       console.log('[RAG] Filtering to document:', documentId);
     }
     
-    // Search vector database with expanded query
+    // ============================================
+    // STEP 1: Search FAQs from Knowledge Loop
+    // These are human-verified answers from resolved escalations
+    // ============================================
+    let faqSources: RAGSource[] = [];
+    if (includeFAQs) {
+      faqSources = await searchFAQsForRAG(userQuery);
+      if (faqSources.length > 0) {
+        console.log(`[RAG] 🧠 Knowledge Loop: Found ${faqSources.length} relevant FAQ(s)`);
+      }
+    }
+    
+    // ============================================
+    // STEP 2: Search vector database
+    // ============================================
     const searchResults = await searchVectors(
       expandedQuery,
       topK,
       documentId ? { documentId } : undefined
     );
     
-    console.log(`[RAG] Found ${searchResults.length} results`);
+    console.log(`[RAG] Found ${searchResults.length} document results`);
     
     // Log the scores for debugging
     if (searchResults.length > 0) {
       console.log('[RAG] Top scores:', searchResults.slice(0, 5).map(r => 
         `${r.documentName}: ${(r.score * 100).toFixed(1)}%`
       ).join(', '));
+    }
+    
+    // If we have FAQs but no document results, still use FAQs
+    if (searchResults.length === 0 && faqSources.length > 0) {
+      console.log('[RAG] Using FAQ sources only (no document matches)');
+      const avgConfidence = faqSources.reduce((sum, s) => sum + s.score, 0) / faqSources.length;
+      const context = formatContext(faqSources, maxContextLength);
+      
+      return {
+        context,
+        sources: faqSources,
+        hasContext: true,
+        avgConfidence,
+        totalChunksSearched: 0,
+        chunksUsed: faqSources.length
+      };
     }
     
     if (searchResults.length === 0) {
@@ -250,7 +315,7 @@ export async function performRAG(
     
     console.log(`[RAG] ${relevantResults.length} results above score ${minScore}`);
     
-    if (relevantResults.length === 0) {
+    if (relevantResults.length === 0 && faqSources.length === 0) {
       console.log('[RAG] All results below minimum score. Best score was:', 
         (searchResults[0]?.score * 100).toFixed(1) + '%');
       return {
@@ -259,8 +324,11 @@ export async function performRAG(
       };
     }
     
-    // Convert to RAGSource format
-    const sources: RAGSource[] = relevantResults.map(r => ({
+    // ============================================
+    // STEP 3: Merge FAQ and document sources
+    // FAQs come first (higher priority)
+    // ============================================
+    const documentSources: RAGSource[] = relevantResults.map(r => ({
       documentName: r.documentName,
       chunkId: r.chunkId,
       text: r.text,
@@ -268,21 +336,24 @@ export async function performRAG(
       chunkIndex: r.chunkIndex
     }));
     
+    // Merge: FAQs first, then documents
+    const allSources = [...faqSources, ...documentSources];
+    
     // Calculate average confidence
-    const avgConfidence = sources.reduce((sum, s) => sum + s.score, 0) / sources.length;
+    const avgConfidence = allSources.reduce((sum, s) => sum + s.score, 0) / allSources.length;
     
     // Format context string
-    const context = formatContext(sources, maxContextLength);
+    const context = formatContext(allSources, maxContextLength);
     
-    console.log(`[RAG] Built context with ${sources.length} sources, avg confidence: ${(avgConfidence * 100).toFixed(1)}%`);
+    console.log(`[RAG] Built context with ${allSources.length} sources (${faqSources.length} FAQs + ${documentSources.length} docs), avg confidence: ${(avgConfidence * 100).toFixed(1)}%`);
     
     return {
       context,
-      sources,
+      sources: allSources,
       hasContext: true,
       avgConfidence,
       totalChunksSearched: searchResults.length,
-      chunksUsed: sources.length
+      chunksUsed: allSources.length
     };
     
   } catch (error) {

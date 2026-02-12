@@ -1,0 +1,59 @@
+{
+  "id": "3ab0fa61-00cb-472c-8edf-1e94c5ec5001",
+  "conversationId": "1c26c7ab-8c18-4c10-9e60-5d32c4071955",
+  "userQuestion": "what is refund?",
+  "context": [
+    {
+      "role": "assistant",
+      "content": "Dhruv Rathee is a prominent **Indian YouTuber, vlogger, and social media personality**.\n\nHe is widely known for his videos that analyze socio-political issues, current affairs, and media narratives, primarily focusing on India.\n\nKey characteristics and aspects of his work include:\n\n*   **Content:** He creates explainer videos, vlogs, and documentaries that often offer critical perspectives on government policies, social issues, and mainstream media. He frequently engages in fact-checking and debunking misinformation.\n*   **Style:** His videos are typically well-researched, presented in a clear and analytical manner, often using data, visuals, and historical context.\n*   **Audience:** He has a large following, particularly among young Indians, and is considered an influential voice in online political discourse.\n*   **Themes:** His work covers a wide range of topics, including economics, politics, environment, human rights, and international relations.\n*   **Perception:** He is often seen as a voice for liberal or progressive viewpoints and has been both praised for his critical analysis and criticized by those who disagree with his political stance.",
+      "timestamp": "2026-01-21T06:00:39.929Z"
+    },
+    {
+      "role": "assistant",
+      "content": "**🙋 Human Expert Response:**\n\nfiedwbd\n\n*Resolved by: ddh*",
+      "timestamp": "2026-01-21T06:02:19.839Z"
+    },
+    {
+      "role": "user",
+      "content": "what service the nurse provide?",
+      "timestamp": "2026-01-21T07:19:07.574Z"
+    },
+    {
+      "role": "assistant",
+      "content": "According to Company-Policy-and-Procedure-June-1.18-V6.0.pdf:\n\nNurses at Triage Logic provide direct nurse advice line services to patients, operating within a highly structured and regulated framework designed to ensure quality, safety, and compliance. Their services are central to Triage Logic's mission to lead the field of nurse triage, committing expertise, compassion, and reliability to exceed expectations of medical professionals and their patients.\n\nThe specific services and responsibilities of nurses include:\n\n*   **Direct Patient Advice and Assessment:**\n    *   Nurses directly provide nurse advice line services to patients, covering all patient groups (pediatric, adult, geriatric).\n    *   They give patients advice exclusively from standard guidelines provided by Dr. Bart Schmitt and David Thompson.\n    *   Under no circumstances are nurses allowed to use outside resources unless pre-approved by the Medical Director and made available from within the software.\n    *   Nurses conduct a full assessment of the patient using standard triage guidelines.\n    *   They are responsible for directing patients to the appropriate level of care.\n    *   Every call put into the system remains in a common queue until a nurse claims it, ensuring no call is left unanswered.\n    *   All calls are recorded.\n\n*   **Health Information Provision and Communication:**\n    *   Nurses are allowed to email health information sheets, provided within the Schmitt Thompson database, after completing a full assessment of the patient.\n    *   When communicating with patients, staff are required to use plain language, avoiding complex medical terms or jargon, to ensure the information is understandable to the consumer.\n    *   Any materials created internally for consumers are reviewed by the Medical Director for plain language, discussed with nurse managers, and then uploaded to the software for nurses to use.\n\n*   **Quality of Care and Compliance:**\n    *   Nurses are expected to provide a high level of quality care, with their proficiency, responsiveness, communication, and accommodation being evaluated through client and end-user satisfaction surveys.\n    *   The Medical Director oversees nursing quality, including random checks on past phone calls to ensure the highest level of quality of care and no influence on patient phone calls.\n    *   Nurse Managers are responsible for the quality management of the nursing program at the clinical level.\n    *   Nurses are required to comply with Triage Logic Policies and Procedures at all times.\n    *   They must adhere to regulatory compliance, technical education competency, and URAC standards related to their position.\n\n*   **Work Environment and Professional Standards:**\n    *   Nurses are required to work in a dedicated room alone while taking calls or accessing the system, in a quiet environment without any background noise audible to a caller.\n    *   They must have high-speed internet access (DSL, Cable, or Satellite).\n    *   Only licensed registered nurses (RNs) take calls.\n    *   Nurses are required to have current licensure as a Registered Nurse in a Nurse Compact State, with Triage Logic verifying licensure and reporting changes.\n    *   They must provide proof of current professional liability insurance.\n    *   Nurses are paid an hourly/fixed salary or hourly rate and are not incentivized on the number of calls handled in an hour or a shift, nor are they able to influence patient phone calls for financial gain.\n\n*   **Role in Quality Management and Complaint Resolution:**\n    *   Nurse Managers assist in the selection of Quality Improvement (QI) monitors/indicators, may develop service expectations, review patient safety events, advise staff on timely and efficient work, and address challenges of triage calls.\n    *   They determine how quality information is communicated to staff and encourage staff to report quality and safety/risk concerns.\n    *   Nurse Managers collect data, report measurements to the Quality Committee, and prepare summaries.\n    *   They ensure that all complaints are identified, investigated, corrected, and documented, and solve interdepartmental quality and patient care problems.\n    *   When a complaint arises, the nurse manager on call for clinical staff reviews the complaint, listens to the call, reviews the note, and talks to the agent or nurse involved.\n    *   The Medical Director is available to RNs for questions and is responsible for overseeing any clinical complaints and internal nursing quality.\n\n*   **Training and Development:**\n    *   The Medical Director oversees all clinical staff training and continuing education.\n    *   Nurse Directors ensure the efficiency and continuing education of nurses and compliance with state board of nursing and state nurse practice requirements.\n    *   Nurse Managers conduct planning, monitoring, and evaluation with nurses, and provide clinical support.\n    *   Nurse Managers are permitted to create a nurse user after the nurse has completed their orientation checklist.\n    *   Training includes clinical aspects, phone manners, HIPAA understanding, and state regulatory training.\n\nIn essence, Triage Logic's nurses are the frontline providers of medical advice, operating under strict protocols and continuous quality oversight to ensure patient safety and satisfaction, while adhering to professional and regulatory standards.",
+      "timestamp": "2026-01-21T07:19:27.054Z"
+    },
+    {
+      "role": "user",
+      "content": "what is refund?",
+      "timestamp": "2026-01-21T08:36:31.489Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I couldn't find any information related to your question in our knowledge base documents.\n\n**Your question:** \"what is refund?\"\n\n**What you can do:**\n• 🔄 Try rephrasing your question with different keywords\n• 📄 Make sure the relevant document has been uploaded\n• 👤 **Get help from a human expert** - Click the button below to escalate this to our support team\n\nI can only answer questions based on the documents uploaded to our system. I don't use general knowledge to ensure you get accurate, verified information.",
+      "timestamp": "2026-01-21T08:36:36.501Z"
+    }
+  ],
+  "attemptedAnswer": "I couldn't find any information related to your question in our knowledge base documents.\n\n**Your question:** \"what is refund?\"\n\n**What you can do:**\n• 🔄 Try rephrasing your question with different keywords\n• 📄 Make sure the relevant document has been uploaded\n• 👤 **Get help from a human expert** - Click the button below to escalate this to our support team\n\nI can only answer questions based on the documents uploaded to our system. I don't use general knowledge to ensure you get accurate, verified information.",
+  "confidenceScore": 0,
+  "documentsSearched": 0,
+  "topMatchScore": 0,
+  "sourcesFound": [],
+  "reason": "no_document_match",
+  "urgency": "medium",
+  "tags": [
+    "refund"
+  ],
+  "status": "resolved",
+  "shouldAddToKB": true,
+  "addedToKB": false,
+  "relatedDocuments": [],
+  "createdAt": "2026-01-21T08:36:57.007Z",
+  "updatedAt": "2026-01-21T08:37:23.061Z",
+  "userNotified": false,
+  "humanAnswer": "asdf",
+  "resolvedBy": "dd",
+  "resolvedAt": "2026-01-21T08:37:23.058Z",
+  "kbIntegrationType": "faq",
+  "category": "Billing & Payments"
+}

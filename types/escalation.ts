@@ -254,9 +254,9 @@ export const SENSITIVE_TOPICS = [
  * Confidence thresholds
  */
 export const CONFIDENCE_THRESHOLDS = {
-  HIGH: 0.65,      // Above this = confident answer
-  MEDIUM: 0.45,    // Between medium and high = answer with caution
-  LOW: 0.25,       // Below this = escalate
+  HIGH: 0.55,      // Above this = confident answer (lowered from 0.65)
+  MEDIUM: 0.35,    // Between medium and high = answer with caution
+  LOW: 0.20,       // Below this = auto-escalate (lowered from 0.25)
 } as const;
 
 /**

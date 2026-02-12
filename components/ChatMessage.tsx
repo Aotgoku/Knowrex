@@ -166,12 +166,21 @@ export default function ChatMessage({
             </div>
           )}
           
-          {/* Escalation confirmed */}
+          {/* Escalation confirmed - waiting for human */}
           {(escalated || message.escalationId) && (
-            <div className="mt-3 pt-3 border-t border-green-200 bg-green-50 -mx-4 -mb-3 px-4 pb-3 rounded-b-2xl">
-              <div className="flex items-center gap-2 text-green-700 text-xs">
-                <span className="text-lg">✅</span>
-                <span>Request sent! A human expert will review your question shortly.</span>
+            <div className="mt-3 pt-3 border-t border-blue-200 bg-blue-50 -mx-4 -mb-3 px-4 pb-3 rounded-b-2xl">
+              <div className="flex items-start gap-2 text-blue-700 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex gap-1">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-medium">Waiting for human expert...</p>
+                  <p className="mt-1 opacity-80">Your question has been sent to our support team. You'll see their response here shortly.</p>
+                </div>
               </div>
             </div>
           )}

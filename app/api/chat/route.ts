@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
     // RAG: Search for relevant document context
     // ============================================
     let systemPrompt = GENERAL_SYSTEM_PROMPT;
+    let noDocumentMatch = false; // Track if we found no relevant documents
     
     if (ragEnabled && shouldUseRAG(message)) {
       console.log('[Chat API] RAG enabled, searching documents...');
@@ -174,7 +175,9 @@ export async function POST(request: NextRequest) {
           
           console.log('[Chat API]', getRAGSummary(ragResult));
         } else {
-          console.log('[Chat API] No relevant documents found, using general knowledge');
+          // NO DOCUMENTS FOUND - Don't use general knowledge!
+          console.log('[Chat API] No relevant documents found - will suggest escalation');
+          noDocumentMatch = true;
         }
         
         // ============================================
@@ -286,6 +289,59 @@ USER QUESTION: ${message}
       console.log('[Chat API] Sending to Gemini with RAG context:');
       console.log('[Chat API] Sources count:', sources.length);
       console.log('[Chat API] First source text preview:', sources[0]?.text?.substring(0, 200));
+    }
+
+    // ============================================
+    // NO DOCUMENT MATCH - Return static response
+    // Don't use Gemini's general knowledge!
+    // ============================================
+    if (noDocumentMatch) {
+      console.log('[Chat API] No document match - returning static response');
+      
+      const noMatchResponse = `I couldn't find any information related to your question in our knowledge base documents.
+
+**Your question:** "${message}"
+
+**What you can do:**
+• 🔄 Try rephrasing your question with different keywords
+• 📄 Make sure the relevant document has been uploaded
+• 👤 **Get help from a human expert** - Click the button below to escalate this to our support team
+
+I can only answer questions based on the documents uploaded to our system. I don't use general knowledge to ensure you get accurate, verified information.`;
+
+      const encoder = new TextEncoder();
+      const metadata = {
+        usedRAG: false,
+        sources: [],
+        confidence: 0,
+        type: 'metadata',
+        noDocumentMatch: true,
+        escalation: {
+          shouldEscalate: false,
+          reason: 'no_document_match',
+          urgency: 'medium',
+          message: 'No relevant documents found for this question',
+          offerEscalation: true  // Always offer escalation when no docs found
+        },
+        documentsSearched: 0,
+        topMatchScore: 0
+      };
+      
+      const readableStream = new ReadableStream({
+        start(controller) {
+          const metadataStr = `__RAG_METADATA__${JSON.stringify(metadata)}__END_METADATA__`;
+          controller.enqueue(encoder.encode(metadataStr));
+          controller.enqueue(encoder.encode(noMatchResponse));
+          controller.close();
+        },
+      });
+
+      return new Response(readableStream, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Transfer-Encoding': 'chunked',
+        },
+      });
     }
 
     // Send the message and get a streaming response

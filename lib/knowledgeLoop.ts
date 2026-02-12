@@ -1,6 +1,7 @@
 // ============================================
 // Knowledge Loop Library - Learn from Escalations
-// Phase 4: Human Escalation System
+// Phase 4.5: Knowledge Loop System
+// Learn from human-resolved escalations to improve AI responses!
 // ============================================
 
 import { v4 as uuidv4 } from 'uuid';
@@ -12,6 +13,9 @@ import {
   KBIntegrationType
 } from '@/types/escalation';
 import { updateEscalation, getKBPendingEscalations } from './escalationSystem';
+
+// Re-export FAQEntry type for use in RAG system
+export type { FAQEntry } from '@/types/escalation';
 
 // Data directories
 const FAQ_DIR = path.join(process.cwd(), 'data', 'faq');

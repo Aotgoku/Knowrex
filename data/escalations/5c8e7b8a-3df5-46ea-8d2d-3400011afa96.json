@@ -1,0 +1,59 @@
+{
+  "id": "5c8e7b8a-3df5-46ea-8d2d-3400011afa96",
+  "conversationId": "658cc84f-9a4a-4ef7-863c-3d7f1ff236a8",
+  "userQuestion": "what is refund ?",
+  "context": [
+    {
+      "role": "user",
+      "content": "what is refund?",
+      "timestamp": "2026-01-21T08:36:31.489Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I couldn't find any information related to your question in our knowledge base documents.\n\n**Your question:** \"what is refund?\"\n\n**What you can do:**\n• 🔄 Try rephrasing your question with different keywords\n• 📄 Make sure the relevant document has been uploaded\n• 👤 **Get help from a human expert** - Click the button below to escalate this to our support team\n\nI can only answer questions based on the documents uploaded to our system. I don't use general knowledge to ensure you get accurate, verified information.",
+      "timestamp": "2026-01-21T08:36:36.501Z"
+    },
+    {
+      "role": "assistant",
+      "content": "**🙋 Human Expert Response:**\n\nasdf\n\n*Resolved by: dd*",
+      "timestamp": "2026-01-21T08:37:23.058Z"
+    },
+    {
+      "role": "user",
+      "content": "who are the customers of triagelogic?",
+      "timestamp": "2026-01-21T08:46:29.704Z"
+    },
+    {
+      "role": "user",
+      "content": "what is refund ?",
+      "timestamp": "2026-01-23T10:48:53.320Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I couldn't find any information related to your question in our knowledge base documents.\n\n**Your question:** \"what is refund ?\"\n\n**What you can do:**\n• 🔄 Try rephrasing your question with different keywords\n• 📄 Make sure the relevant document has been uploaded\n• 👤 **Get help from a human expert** - Click the button below to escalate this to our support team\n\nI can only answer questions based on the documents uploaded to our system. I don't use general knowledge to ensure you get accurate, verified information.",
+      "timestamp": "2026-01-23T10:48:56.550Z"
+    }
+  ],
+  "attemptedAnswer": "I couldn't find any information related to your question in our knowledge base documents.\n\n**Your question:** \"what is refund ?\"\n\n**What you can do:**\n• 🔄 Try rephrasing your question with different keywords\n• 📄 Make sure the relevant document has been uploaded\n• 👤 **Get help from a human expert** - Click the button below to escalate this to our support team\n\nI can only answer questions based on the documents uploaded to our system. I don't use general knowledge to ensure you get accurate, verified information.",
+  "confidenceScore": 0,
+  "documentsSearched": 0,
+  "topMatchScore": 0,
+  "sourcesFound": [],
+  "reason": "no_document_match",
+  "urgency": "medium",
+  "tags": [
+    "refund"
+  ],
+  "status": "resolved",
+  "shouldAddToKB": true,
+  "addedToKB": false,
+  "relatedDocuments": [],
+  "createdAt": "2026-01-23T10:49:48.820Z",
+  "updatedAt": "2026-01-23T10:52:04.786Z",
+  "userNotified": false,
+  "humanAnswer": "dege",
+  "resolvedBy": "dhruv",
+  "resolvedAt": "2026-01-23T10:52:04.770Z",
+  "kbIntegrationType": "faq",
+  "category": "Refunds & Returns"
+}

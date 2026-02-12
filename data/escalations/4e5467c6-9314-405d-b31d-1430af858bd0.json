@@ -1,0 +1,56 @@
+{
+  "id": "4e5467c6-9314-405d-b31d-1430af858bd0",
+  "conversationId": "32f1b0c3-817e-48cf-a152-9c27875a9f69",
+  "userQuestion": "who is the prime minister of india?",
+  "context": [
+    {
+      "role": "assistant",
+      "content": "I couldn't find any information related to your question in our knowledge base documents.\n\n**Your question:** \"what is refund ?\"\n\n**What you can do:**\n• 🔄 Try rephrasing your question with different keywords\n• 📄 Make sure the relevant document has been uploaded\n• 👤 **Get help from a human expert** - Click the button below to escalate this to our support team\n\nI can only answer questions based on the documents uploaded to our system. I don't use general knowledge to ensure you get accurate, verified information.",
+      "timestamp": "2026-01-23T10:48:56.550Z"
+    },
+    {
+      "role": "assistant",
+      "content": "**🙋 Human Expert Response:**\n\ndege\n\n*Resolved by: dhruv*",
+      "timestamp": "2026-01-23T10:52:04.770Z"
+    },
+    {
+      "role": "user",
+      "content": "who is the customer of this company?",
+      "timestamp": "2026-01-24T13:04:36.762Z"
+    },
+    {
+      "role": "assistant",
+      "content": "According to Company-Policy-and-Procedure-June-1.18-V6.0.pdf:\n\nTriage Logic serves two primary categories of customers: **Direct Organizational Clients** and **End Users (Consumers/Patients)**. The company's mission is to lead the field of nurse triage by committing expertise, compassion, and reliability to services that exceed the expectations of both medical professionals (clients) and their patients (consumers).\n\n**I. Direct Organizational Clients**\n\nThese are the entities that contract with Triage Logic to provide nurse triage services to their patient populations. Triage Logic's marketing and sales communications are specifically targeted towards these clients.\n\n*   **Types of Clients:**\n    *   **Busy practices** in need of a phone triage system for patients.\n    *   **Physician groups**, including those that are part of a hospital or a health system.\n    *   **Hospitals** and **health systems**.\n    *   **Clinics** and other **health care organizations or entities** that have entered into service agreements with Triage Logic (collectively referred to as \"Covered Entities\").\n    *   **Contracted medical answering services** to which calls are forwarded.\n    *   **Medical representatives** who bring consumers to Triage Logic.\n    *   **Delegated entities** such as PRN (Phone RN), with whom Triage Logic contracts for specific activities like nurse triage work.\n\n*   **Client Management and Interaction:**\n    *   A **Client Relations Manager** supervises the day-to-day management of all clients and serves as the primary contact person.\n    *   The **Medical Director** and **Sales & Accounts Manager** telephone and set up meetings with clients on an as-needed basis for feedback.\n    *   **Client satisfaction** is documented through questionnaires developed in collaboration between the Medical Director and the Client Relations Manager, evaluating satisfaction with the quality of the nurse triage service. These surveys are conducted at least once a year, and results are reported to the Quality Management Committee.\n    *   Triage Logic maintains a formal **complaint resolution process** for clients, with complaints routed through the Client Relations Manager to the Medical Director and ultimately the CEO.\n    *   The **Quality Management Program (QMP)** is designed to promote \"quality to clients (doctors and hospitals).\"\n    *   Triage Logic also interacts with \"business partners\" and an \"outside audience\" through various communications, including newsletters.\n\n**II. End Users (Consumers/Patients)**\n\nThese are the individuals who directly receive the nurse advice line services from Triage Logic's registered nurses, facilitated through the organizational clients.\n\n*   **Patient Demographics:** Triage Logic covers all patient groups: pediatric, adult, and geriatric.\n*   **Access to Services:** Patients/callers access triage services by calling an assigned telephone number specific to their participating physician's office, or as a call forwarded to Triage Logic's contracted medical answering service.\n*   **Nurse Triage Process:**\n    *   A patient calls and talks to a triage representative.\n    *   A nurse calls the patient back and directs them to the appropriate level of care, using standard guidelines from Schmitt-Thompson.\n    *   The system documents all call details, and all calls are recorded.\n    *   Nurses are permitted to email health information sheets after a full patient assessment.\n    *   Communication with patients uses plain language, avoiding complex medical terms.\n*   **Patient Safety:** Triage Logic has specific procedures for immediate threats to health and safety. Patients with potentially life, limb, or vision-threatening problems are triaged as \"Urgent\" and directed to seek care within 24 hours or sooner (e.g., ED, urgent care center, or physician office).\n*   **Consumer Satisfaction:** End-user satisfaction is measured through random patient surveys conducted at least once a year. These surveys evaluate:\n    *   **Proficiency:** The customer’s perception of the capability, expertise, or knowledge of the staff.\n    *   **Responsiveness:** Timeliness, assistance, and guidance.\n    *   **Communication:** Clarity of verbal and written expression.\n    *   **Accommodation:** Behavior or interpersonal skills of staff, focusing on respect, courtesy, and sensitivity.\n    *   **Patient Satisfaction:** The overall patient impression of the encounter with staff, focusing on improving services and the appropriateness of the surveillance process.\n    *   An average score of 3.8 or above overall satisfaction is the acceptable performance standard.\n*   **Confidentiality:** Patient lists and information are considered confidential. All newly hired employees are required to read and agree to a Patient Confidentiality Acknowledgement (part of the HIPAA form).\n\nIn summary, Triage Logic's business model involves providing nurse triage services to healthcare providers (their direct clients), who then offer these services to their patients (the end-users or consumers). The company's operations, quality management, and communication strategies are designed to cater to both these distinct customer groups.",
+      "timestamp": "2026-01-24T13:04:56.189Z"
+    },
+    {
+      "role": "user",
+      "content": "who is the prime minister of india?",
+      "timestamp": "2026-01-24T13:12:07.521Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I couldn't find any information related to your question in our knowledge base documents.\n\n**Your question:** \"who is the prime minister of india?\"\n\n**What you can do:**\n• 🔄 Try rephrasing your question with different keywords\n• 📄 Make sure the relevant document has been uploaded\n• 👤 **Get help from a human expert** - Click the button below to escalate this to our support team\n\nI can only answer questions based on the documents uploaded to our system. I don't use general knowledge to ensure you get accurate, verified information.",
+      "timestamp": "2026-01-24T13:13:10.777Z"
+    }
+  ],
+  "attemptedAnswer": "I couldn't find any information related to your question in our knowledge base documents.\n\n**Your question:** \"who is the prime minister of india?\"\n\n**What you can do:**\n• 🔄 Try rephrasing your question with different keywords\n• 📄 Make sure the relevant document has been uploaded\n• 👤 **Get help from a human expert** - Click the button below to escalate this to our support team\n\nI can only answer questions based on the documents uploaded to our system. I don't use general knowledge to ensure you get accurate, verified information.",
+  "confidenceScore": 0,
+  "documentsSearched": 0,
+  "topMatchScore": 0,
+  "sourcesFound": [],
+  "reason": "no_document_match",
+  "urgency": "medium",
+  "status": "resolved",
+  "shouldAddToKB": true,
+  "addedToKB": false,
+  "relatedDocuments": [],
+  "createdAt": "2026-01-24T13:17:16.366Z",
+  "updatedAt": "2026-01-24T13:21:03.834Z",
+  "userNotified": false,
+  "humanAnswer": "narendra modi",
+  "resolvedBy": "dhruv",
+  "resolvedAt": "2026-01-24T13:21:03.825Z",
+  "kbIntegrationType": "faq",
+  "category": "General Inquiry"
+}
