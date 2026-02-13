@@ -44,10 +44,15 @@ next-env.d.ts
 public/uploads/*
 data/documents/*
 
+# Runtime data - contains user data and should not be committed
+data/escalations/*
+data/faq/*
+
 # Keep the folders but not the files
 !public/uploads/.gitkeep
 !data/documents/.gitkeep
-
+!data/escalations/.gitkeep
+!data/faq/.gitkeep
 
 # ChromaDB local storage
 data/chroma/*
