@@ -120,9 +120,10 @@ export async function POST(request: NextRequest) {
     // Check if API key is configured
     if (!process.env.GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY is not configured');
+      console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('GEMINI')));
       return new Response(
         JSON.stringify({ 
-          error: 'AI service is not configured. Please add your Gemini API key to .env' 
+          error: 'AI service is not configured. Please add your Gemini API key to .env file and restart the dev server.' 
         }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );

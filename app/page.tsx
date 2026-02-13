@@ -376,8 +376,13 @@ export default function ChatPage() {
         } catch (parseError) {
           // If parsing fails, use the default error message
           console.error('Failed to parse error response:', parseError);
+          // Keep the default errorMessage
         }
-        throw new Error(errorMessage);
+        
+        // Set error state instead of throwing
+        setError(errorMessage);
+        setIsLoading(false);
+        return; // Exit early instead of throwing
       }
 
       // Create a placeholder for the AI response
