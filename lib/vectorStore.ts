@@ -14,6 +14,15 @@ export const VECTOR_CONFIG = {
   distanceMetric: 'cosine' as const,
 };
 
+// ============================================
+// IN-MEMORY CACHE
+// The vectors.json is ~136MB - reading it from
+// disk on every query is extremely slow.
+// Cache it in memory after first load.
+// ============================================
+let vectorCache: VectorDatabase | null = null;
+let cacheLoadPromise: Promise<VectorDatabase> | null = null;
+
 /**
  * Vector metadata structure
  */
@@ -51,25 +60,50 @@ async function ensureStorageDirectory(): Promise<void> {
 }
 
 /**
- * Load vectors from file
+ * Load vectors from file (with in-memory cache)
+ * The 136MB file is only read from disk ONCE per server session.
  */
 async function loadVectors(): Promise<VectorDatabase> {
-  try {
-    await ensureStorageDirectory();
-    const data = await fs.readFile(VECTOR_CONFIG.storageFile, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    // File doesn't exist or is empty, return empty database
-    return { vectors: [], version: 1 };
+  // Return from cache if already loaded
+  if (vectorCache) {
+    return vectorCache;
   }
+
+  // If a load is already in progress, wait for it
+  if (cacheLoadPromise) {
+    return cacheLoadPromise;
+  }
+
+  // Start loading from disk
+  cacheLoadPromise = (async () => {
+    try {
+      await ensureStorageDirectory();
+      console.log('[VectorStore] Loading vectors from disk (first time)...');
+      const data = await fs.readFile(VECTOR_CONFIG.storageFile, 'utf-8');
+      const db = JSON.parse(data) as VectorDatabase;
+      vectorCache = db;
+      console.log(`[VectorStore] Loaded ${db.vectors.length} vectors into memory cache`);
+      return db;
+    } catch (error) {
+      // File doesn't exist or is empty, return empty database
+      cacheLoadPromise = null;
+      vectorCache = { vectors: [], version: 1 };
+      return vectorCache;
+    }
+  })();
+
+  return cacheLoadPromise;
 }
 
 /**
- * Save vectors to file
+ * Save vectors to file and update memory cache
  */
 async function saveVectors(db: VectorDatabase): Promise<void> {
+  // Update cache immediately
+  vectorCache = db;
+  cacheLoadPromise = null;
   await ensureStorageDirectory();
-  await fs.writeFile(VECTOR_CONFIG.storageFile, JSON.stringify(db, null, 2), 'utf-8');
+  await fs.writeFile(VECTOR_CONFIG.storageFile, JSON.stringify(db), 'utf-8');
 }
 
 /**

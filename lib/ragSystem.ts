@@ -47,7 +47,7 @@ export interface RAGOptions {
  */
 export const RAG_DEFAULTS = {
   topK: 20,  // Get more results for comprehensive answers
-  minScore: 0.20,  // Even lower threshold to ensure we don't miss content
+  minScore: 0.15,  // Very low threshold - we'd rather return something than nothing
   maxContextLength: 30000, // Much larger context for complete answers
   includeFAQs: true, // Include FAQ search by default
 };
@@ -316,6 +316,28 @@ export async function performRAG(
     console.log(`[RAG] ${relevantResults.length} results above score ${minScore}`);
     
     if (relevantResults.length === 0 && faqSources.length === 0) {
+      // FALLBACK: Even if scores are below threshold, use top results
+      // Better to answer with low-confidence than refuse entirely
+      if (searchResults.length > 0 && searchResults[0].score > 0.05) {
+        const fallbackResults = searchResults.slice(0, 5);
+        console.log(`[RAG] Using top ${fallbackResults.length} results as fallback (best score: ${(fallbackResults[0].score * 100).toFixed(1)}%)`);
+        const fallbackSources: RAGSource[] = fallbackResults.map(r => ({
+          documentName: r.documentName,
+          chunkId: r.chunkId,
+          text: r.text,
+          score: r.score,
+          chunkIndex: r.chunkIndex
+        }));
+        const avgConf = fallbackSources.reduce((sum, s) => sum + s.score, 0) / fallbackSources.length;
+        return {
+          context: formatContext(fallbackSources, maxContextLength),
+          sources: fallbackSources,
+          hasContext: true,
+          avgConfidence: avgConf,
+          totalChunksSearched: searchResults.length,
+          chunksUsed: fallbackSources.length
+        };
+      }
       console.log('[RAG] All results below minimum score. Best score was:', 
         (searchResults[0]?.score * 100).toFixed(1) + '%');
       return {
