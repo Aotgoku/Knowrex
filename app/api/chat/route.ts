@@ -54,19 +54,15 @@ async function retryWithBackoff<T>(
     } catch (error: any) {
       lastError = error;
       
-      const isRetryableError = 
+      const isRateLimitError = 
         error?.status === 429 || 
-        error?.status === 503 ||
         error?.message?.toLowerCase().includes('rate limit') ||
         error?.message?.toLowerCase().includes('quota') ||
-        error?.message?.toLowerCase().includes('too many requests') ||
-        error?.message?.toLowerCase().includes('503') ||
-        error?.message?.toLowerCase().includes('service unavailable') ||
-        error?.message?.toLowerCase().includes('high demand');
+        error?.message?.toLowerCase().includes('too many requests');
       
-      if (isRetryableError && attempt < maxRetries - 1) {
+      if (isRateLimitError && attempt < maxRetries - 1) {
         const delayMs = initialDelay * Math.pow(2, attempt);
-        console.log(`API overloaded (${error?.status || 'unknown'}), retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})...`);
+        console.log(`Rate limit hit, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})...`);
         await delay(delayMs);
         continue;
       }
@@ -139,15 +135,9 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to initialize Gemini client');
     }
 
-    // Get the model - use stable models with fallback
-    // gemini-1.5-flash is fast, stable and less overloaded than 2.5-flash
-    const PRIMARY_MODEL = 'gemini-1.5-flash';
-    const FALLBACK_MODEL = 'gemini-1.5-pro';
+    // Get the model
     const model = client.getGenerativeModel({ 
-      model: PRIMARY_MODEL
-    });
-    const fallbackModel = client.getGenerativeModel({
-      model: FALLBACK_MODEL
+      model: 'gemini-2.5-flash'
     });
 
     // ============================================
@@ -356,39 +346,11 @@ I can only answer questions based on the documents uploaded to our system. I don
     }
 
     // Send the message and get a streaming response
-    // Try primary model first, fall back to backup model on persistent 503s
-    let result;
-    try {
-      result = await retryWithBackoff(
-        async () => await chat.sendMessageStream(augmentedMessage),
-        3,
-        2000
-      );
-    } catch (primaryError: any) {
-      const isOverloaded = 
-        primaryError?.status === 503 ||
-        primaryError?.message?.toLowerCase().includes('service unavailable') ||
-        primaryError?.message?.toLowerCase().includes('high demand');
-      
-      if (isOverloaded) {
-        console.log(`[Chat API] Primary model (${PRIMARY_MODEL}) overloaded, switching to fallback (${FALLBACK_MODEL})...`);
-        const fallbackChat = fallbackModel.startChat({
-          history: chatHistory,
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 8192,
-            topP: 0.8,
-          },
-        });
-        result = await retryWithBackoff(
-          async () => await fallbackChat.sendMessageStream(augmentedMessage),
-          2,
-          3000
-        );
-      } else {
-        throw primaryError;
-      }
-    }
+    const result = await retryWithBackoff(
+      async () => await chat.sendMessageStream(augmentedMessage),
+      3,
+      2000
+    );
 
     // Create a readable stream for the response
     const encoder = new TextEncoder();
@@ -459,19 +421,6 @@ I can only answer questions based on the documents uploaded to our system. I don
 
     if (error instanceof Error) {
       const errorMsg = error.message.toLowerCase();
-      
-      // 503 - Model overloaded / service unavailable
-      if (errorMsg.includes('503') ||
-          errorMsg.includes('service unavailable') ||
-          errorMsg.includes('high demand')) {
-        return new Response(
-          JSON.stringify({ 
-            error: '⏳ The AI service is currently overloaded. Please wait a few seconds and try again.' 
-          }),
-          { status: 503, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
       if (errorMsg.includes('429') || 
           errorMsg.includes('quota') || 
           errorMsg.includes('rate limit') ||
@@ -513,9 +462,8 @@ export async function GET() {
       status: 'ok', 
       service: 'Knowrex Chat API',
       provider: 'Google Gemini',
-      model: 'gemini-1.5-flash',
-      fallbackModel: 'gemini-1.5-pro',
-      features: ['streaming', 'rag', 'sources', 'model-fallback'],
+      model: 'gemini-2.5-flash',
+      features: ['streaming', 'rag', 'sources'],
       configured: !!process.env.GEMINI_API_KEY 
     }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
