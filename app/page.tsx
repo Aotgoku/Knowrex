@@ -37,27 +37,39 @@ import { useVoiceChat } from '@/hooks/useVoiceChat';
 // Key for localStorage persistence
 const STORAGE_KEY = 'knowrex-chat-history';
 
-// Sample questions to help users get started
-const SAMPLE_QUESTIONS = [
+// High-value enterprise prompt starter cards that showcase real RAG capabilities
+const PROMPT_STARTERS = [
   {
-    id: '1',
-    text: 'What services do you offer?',
-    icon: '🎯'
+    id: 'return-policy',
+    title: 'Return Policy & Condition',
+    prompt: 'What is your official return window and what condition must items be in?',
+    category: 'Policy & Refunds',
+    icon: '📦',
+    badge: 'Pinecone RAG'
   },
   {
-    id: '2', 
-    text: 'How can I contact support?',
-    icon: '📞'
+    id: 'international-shipping',
+    title: 'International Shipping & Duties',
+    prompt: 'Do you deliver internationally to Europe and who is responsible for customs duties?',
+    category: 'Logistics',
+    icon: '✈️',
+    badge: 'Autonomous Doc'
   },
   {
-    id: '3',
-    text: 'Tell me about your pricing',
-    icon: '💰'
+    id: 'vision-diagnosis',
+    title: 'Inspect Invoice or Error Screenshot',
+    prompt: 'How do I upload an invoice or error screenshot for visual AI diagnosis?',
+    category: 'Vision AI',
+    icon: '📸',
+    badge: 'Multimodal'
   },
   {
-    id: '4',
-    text: 'How do I get started?',
-    icon: '🚀'
+    id: 'human-escalation',
+    title: 'Escalate to Live Human Agent',
+    prompt: 'I want to escalate my issue to a human support specialist right now.',
+    category: 'Human-in-the-Loop',
+    icon: '👤',
+    badge: 'Realtime WS'
   }
 ];
 
@@ -739,71 +751,72 @@ export default function ChatPage() {
       style={{ backgroundColor: 'var(--background)' }}
     >
       {/* ============================================
-          Header
+          Obsidian Glass Header
           ============================================ */}
-      <header 
-        className="flex items-center justify-between px-4 py-3 border-b shadow-sm"
-        style={{ 
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--border-color)'
-        }}
-      >
+      <header className="glass-panel sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 py-3 border-b shadow-xs">
         <div className="flex items-center gap-3">
-          {/* Logo */}
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-            <Bot className="w-6 h-6 text-white" />
+          {/* Logo with ambient halo */}
+          <div className="relative group">
+            <div className="absolute inset-0 bg-indigo-500 rounded-xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg border border-white/20">
+              <Bot className="w-5 h-5 text-white" />
+            </div>
           </div>
           <div>
-            <h1 className="font-semibold text-lg" style={{ color: 'var(--foreground)' }}>
-              Knowrex
-            </h1>
-            <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              Intelligent Customer Support
+            <div className="flex items-center gap-2">
+              <h1 className="font-bold text-base sm:text-lg leading-tight text-foreground tracking-tight">
+                Knowrex
+              </h1>
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold tracking-wide uppercase">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                Pinecone Cloud Active
+              </div>
+            </div>
+            <p className="text-xs text-muted">
+              Intelligent Enterprise Support Platform
             </p>
           </div>
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Operations Portal Link */}
           <Link
             href="/admin"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-xs transition-all hover:opacity-80"
-            style={{ 
-              borderColor: 'var(--border-color)',
-              backgroundColor: 'var(--card-bg)',
-              color: 'var(--foreground)'
-            }}
+            className="flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold shadow-xs hover:border-indigo-500 hover:scale-[1.02] transition-all cursor-pointer"
             title="Switch to Operations Portal (Dashboard, Escalations, Documents, Vectors)"
           >
-            <LayoutDashboard className="w-4 h-4 text-indigo-500" />
-            <span className="hidden sm:inline font-medium">Operations Portal</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold uppercase">Admin / Agent</span>
+            <LayoutDashboard className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            <span className="font-medium">Operations Portal</span>
+            <span className="hidden md:inline text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold uppercase">
+              Admin / Agent
+            </span>
           </Link>
 
           {/* Clear Chat Button */}
           <button
             onClick={clearChat}
-            className="p-2 rounded-lg transition-colors hover:bg-opacity-10 hover:bg-gray-500"
-            style={{ color: 'var(--muted)' }}
+            className="p-2 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/60 text-muted hover:text-foreground transition-all cursor-pointer"
             title="Clear chat history"
             aria-label="Clear chat history"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-4 h-4" />
           </button>
 
           {/* Dark Mode Toggle */}
           <button
             onClick={toggleDarkMode}
-            className="p-2 rounded-lg transition-colors hover:bg-opacity-10 hover:bg-gray-500"
-            style={{ color: 'var(--muted)' }}
+            className="p-2 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/60 text-muted hover:text-foreground transition-all cursor-pointer"
             title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {isDarkMode ? (
-              <Sun className="w-5 h-5" />
+              <Sun className="w-4 h-4 text-amber-400" />
             ) : (
-              <Moon className="w-5 h-5" />
+              <Moon className="w-4 h-4" />
             )}
           </button>
         </div>
@@ -814,95 +827,52 @@ export default function ChatPage() {
           ============================================ */}
       <main 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar"
+        className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 custom-scrollbar"
       >
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Show sample questions when chat is empty or only has welcome message */}
+          {/* Executive AI Hero & Starter Cards when chat is empty or only has welcome message */}
           {messages.length <= 1 && (
-            <div className="mb-8">
-              {/* Feature highlights */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div 
-                  className="p-4 rounded-xl border"
-                  style={{ 
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--border-color)'
-                  }}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center mb-3">
-                    <Zap className="w-5 h-5 text-indigo-500" />
-                  </div>
-                  <h3 className="font-medium mb-1" style={{ color: 'var(--foreground)' }}>
-                    Instant Responses
-                  </h3>
-                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                    Get answers in real-time with AI-powered support
-                  </p>
-                </div>
-
-                <div 
-                  className="p-4 rounded-xl border"
-                  style={{ 
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--border-color)'
-                  }}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-3">
-                    <MessageSquare className="w-5 h-5 text-purple-500" />
-                  </div>
-                  <h3 className="font-medium mb-1" style={{ color: 'var(--foreground)' }}>
-                    Natural Conversation
-                  </h3>
-                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                    Chat naturally like you would with a human agent
-                  </p>
-                </div>
-
-                <div 
-                  className="p-4 rounded-xl border"
-                  style={{ 
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--border-color)'
-                  }}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3">
-                    <HelpCircle className="w-5 h-5 text-emerald-500" />
-                  </div>
-                  <h3 className="font-medium mb-1" style={{ color: 'var(--foreground)' }}>
-                    24/7 Available
-                  </h3>
-                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
-                    Get help anytime, day or night
-                  </p>
+            <div className="py-6 sm:py-10 text-center animate-in fade-in-up duration-500">
+              {/* Glowing Orb & Badge */}
+              <div className="relative inline-flex items-center justify-center mb-5">
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-700 rounded-3xl blur-2xl opacity-40 animate-pulse-slow" />
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 flex items-center justify-center shadow-2xl border border-white/25">
+                  <Bot className="w-9 h-9 sm:w-11 sm:h-11 text-white" />
                 </div>
               </div>
 
-              {/* Sample questions */}
-              <div className="text-center mb-4">
-                <p className="text-sm font-medium" style={{ color: 'var(--muted)' }}>
-                  Try asking one of these questions:
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {SAMPLE_QUESTIONS.map((question) => (
+              {/* Title & Subtitle */}
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3 text-foreground">
+                How can <span className="shimmer-text">Knowrex</span> assist you today?
+              </h2>
+              <p className="text-xs sm:text-sm text-muted max-w-xl mx-auto mb-8 font-normal leading-relaxed">
+                Enterprise AI support grounded in verified knowledge documents, protected by sub-5ms guardrails, with live human specialist escalation.
+              </p>
+
+              {/* High-value Starter Prompt Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-3xl mx-auto text-left">
+                {PROMPT_STARTERS.map((item) => (
                   <button
-                    key={question.id}
-                    onClick={() => handleSampleQuestion(question.text)}
+                    key={item.id}
+                    onClick={() => handleSampleQuestion(item.prompt)}
                     disabled={isLoading}
-                    className="p-4 rounded-xl border text-left transition-all duration-200 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed group"
-                    style={{ 
-                      backgroundColor: 'var(--card-bg)',
-                      borderColor: 'var(--border-color)'
-                    }}
+                    className="p-4 rounded-2xl glass-card glow-card border text-left flex items-start gap-3.5 group cursor-pointer disabled:opacity-50"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{question.icon}</span>
-                      <span 
-                        className="font-medium group-hover:text-indigo-500 transition-colors"
-                        style={{ color: 'var(--foreground)' }}
-                      >
-                        {question.text}
-                      </span>
+                    <span className="text-2xl p-2.5 rounded-xl bg-indigo-500/10 dark:bg-indigo-950/40 border border-indigo-500/20 shrink-0 group-hover:scale-110 transition-transform">
+                      {item.icon}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-xs font-semibold text-foreground truncate group-hover:text-indigo-500 transition-colors">
+                          {item.title}
+                        </span>
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0 border border-indigo-500/20">
+                          {item.badge}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted line-clamp-2 leading-relaxed">
+                        {item.prompt}
+                      </p>
                     </div>
                   </button>
                 ))}

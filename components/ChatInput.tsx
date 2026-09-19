@@ -262,10 +262,9 @@ export default function ChatInput({
 
         {/* Input Container */}
         <div 
-          className="flex items-end gap-2 p-2 rounded-2xl border transition-all duration-200"
+          className="flex items-end gap-2 p-2 sm:p-2.5 rounded-2xl border glass-card shadow-xl transition-all duration-200 focus-within:border-indigo-500/60 focus-within:shadow-indigo-500/15"
           style={{ 
-            backgroundColor: 'var(--input-bg)',
-            borderColor: isOverLimit ? 'var(--error)' : 'var(--border-color)'
+            borderColor: isOverLimit ? 'var(--error)' : 'var(--card-border)'
           }}
         >
           {/* Attachment Button */}

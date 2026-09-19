@@ -46,15 +46,11 @@ export default function StatsCard({
 }: StatsCardProps) {
   return (
     <div 
-      className="relative overflow-hidden rounded-xl border p-6 card-hover"
-      style={{ 
-        backgroundColor: 'var(--card-bg)',
-        borderColor: 'var(--border-color)'
-      }}
+      className="glass-card glow-card relative overflow-hidden rounded-2xl p-6 transition-all duration-300"
     >
-      {/* Gradient accent */}
+      {/* Subtle top edge gradient accent */}
       <div 
-        className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${colorClasses[color]}`}
+        className={`absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r ${colorClasses[color]} opacity-80`}
       />
       
       <div className="flex items-start justify-between">

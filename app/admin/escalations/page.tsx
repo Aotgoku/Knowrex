@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Users, RefreshCw, BarChart3, AlertTriangle } from 'lucide-react';
 import { Escalation, EscalationStats } from '@/types/escalation';
 import EscalationList from '@/components/escalations/EscalationList';
 import EscalationFilters from '@/components/escalations/EscalationFilters';
@@ -217,25 +218,37 @@ export default function EscalationsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Human Escalations</h1>
-          <p className="text-gray-500">Manage questions that need human expertise</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60 dark:border-slate-800/60">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              Human Escalations Workspace
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Live human-in-the-loop support desk with automated KB learning integration
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={fetchEscalations}
-            className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-50 text-sm"
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:bg-slate-50 dark:hover:bg-slate-900 text-foreground font-semibold text-xs transition-colors cursor-pointer shadow-xs"
           >
-            🔄 Refresh
+            <RefreshCw className={`w-4 h-4 text-indigo-500 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Refresh Queue</span>
           </button>
           <button
             onClick={() => router.push('/admin/escalations/analytics')}
-            className="px-4 py-2 bg-blue-500 text-white rounded shadow-sm hover:bg-blue-600 text-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-xs shadow-md shadow-indigo-500/20 hover:opacity-95 transition-opacity cursor-pointer"
           >
-            📊 Analytics
+            <BarChart3 className="w-4 h-4" />
+            <span>Knowledge Gap Intel</span>
           </button>
         </div>
       </div>
@@ -257,14 +270,14 @@ export default function EscalationsPage() {
       />
 
       {/* Sort & Count */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-500">
-          Showing {escalations.length} of {total} escalations
+      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+        <span>
+          Showing <strong className="text-foreground">{escalations.length}</strong> of <strong className="text-foreground">{total}</strong> escalations
         </span>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="px-3 py-1.5 border rounded text-sm"
+          className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-card text-foreground text-xs font-medium cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
@@ -275,8 +288,9 @@ export default function EscalationsPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg">
-          {error}
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 

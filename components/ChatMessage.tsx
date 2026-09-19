@@ -103,10 +103,10 @@ export default function ChatMessage({
         
         {/* Message Bubble */}
         <div 
-          className={`px-4 py-3 rounded-2xl shadow-sm ${
+          className={`px-4 sm:px-5 py-3.5 rounded-2xl shadow-sm border transition-all ${
             isUser 
-              ? 'rounded-tr-md text-white' 
-              : 'rounded-tl-md'
+              ? 'rounded-tr-md text-white border-indigo-400/30 shadow-indigo-500/15' 
+              : 'rounded-tl-md glass-card border-slate-200/80 dark:border-white/10'
           }`}
           style={{
             background: isUser ? 'var(--user-bubble)' : 'var(--ai-bubble)',
@@ -173,21 +173,15 @@ export default function ChatMessage({
           
           {/* Escalation UI */}
           {showEscalationUI && !escalated && !message.escalationId && onEscalate && (
-            <div className={`mt-3 pt-3 border-t ${
-              message.escalation?.shouldEscalate 
-                ? 'border-orange-200 bg-orange-50' 
-                : 'border-yellow-200 bg-yellow-50'
-            } -mx-4 -mb-3 px-4 pb-3 rounded-b-2xl`}>
-              <div className="flex items-start gap-2">
+            <div className="mt-3.5 pt-3.5 border-t border-amber-500/20 bg-amber-50/80 dark:bg-amber-950/30 -mx-4 -mb-3 sm:-mx-5 sm:-mb-3.5 px-4 pb-3 sm:px-5 rounded-b-2xl">
+              <div className="flex items-start gap-2.5">
                 {message.escalation?.shouldEscalate ? (
                   <AlertTriangle className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
                 ) : (
-                  <Users className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <Users className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                 )}
                 <div className="flex-1">
-                  <p className={`text-xs ${
-                    message.escalation?.shouldEscalate ? 'text-orange-700' : 'text-yellow-700'
-                  }`}>
+                  <p className="text-xs text-amber-900 dark:text-amber-200 font-medium">
                     {message.escalation?.message || (
                       message.escalation?.shouldEscalate 
                         ? 'This question may need human expertise.'
@@ -197,13 +191,9 @@ export default function ChatMessage({
                   <button
                     onClick={handleEscalate}
                     disabled={isEscalating}
-                    className={`mt-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                      message.escalation?.shouldEscalate
-                        ? 'bg-orange-500 text-white hover:bg-orange-600'
-                        : 'bg-yellow-500 text-white hover:bg-yellow-600'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className="mt-2.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm hover:opacity-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                   >
-                    {isEscalating ? 'Requesting...' : '👤 Get Human Help'}
+                    {isEscalating ? 'Requesting Specialist...' : '👤 Speak with Human Agent'}
                   </button>
                 </div>
               </div>

@@ -121,74 +121,69 @@ export default function VectorDBPage() {
       <SearchTester className="mb-6" />
 
       {/* Document Sync Status */}
-      <div 
-        className="p-4 rounded-xl border"
-        style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}
-      >
+      <div className="glass-card p-6 rounded-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+          <h3 className="font-bold flex items-center gap-2 text-foreground">
             <FileText className="h-5 w-5 text-indigo-500" />
             Document Sync Status
           </h3>
           <button
             onClick={fetchDocuments}
-            className="p-1.5 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-            title="Refresh"
+            className="p-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-muted-foreground hover:text-foreground"
+            title="Refresh Document List"
           >
-            <RefreshCw className="h-4 w-4" style={{ color: 'var(--muted)' }} />
+            <RefreshCw className="h-4 w-4" />
           </button>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--muted)' }} />
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
           </div>
         ) : documents.length === 0 ? (
-          <div className="text-center py-8" style={{ color: 'var(--muted)' }}>
-            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>No documents uploaded yet</p>
-            <p className="text-sm mt-1">Upload documents to start syncing to the vector database</p>
+          <div className="text-center py-10 text-muted-foreground">
+            <FileText className="h-12 w-12 mx-auto mb-2 opacity-40" />
+            <p className="font-medium text-foreground">No documents uploaded yet</p>
+            <p className="text-xs mt-1">Upload policy documents to synchronize vectors to Pinecone Cloud</p>
           </div>
         ) : (
           <>
             {/* Summary */}
-            <div className="flex items-center gap-4 mb-4 text-sm">
+            <div className="flex items-center gap-4 mb-4 text-xs font-semibold">
               <div className="flex items-center gap-1.5">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span style={{ color: 'var(--foreground)' }}>
-                  <strong>{syncedDocs.length}</strong> synced
+                <CheckCircle className="h-4 w-4 text-emerald-500" />
+                <span className="text-foreground">
+                  <strong>{syncedDocs.length}</strong> synced to Pinecone
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <XCircle className="h-4 w-4 text-orange-500" />
-                <span style={{ color: 'var(--foreground)' }}>
-                  <strong>{unsyncedDocs.length}</strong> pending
+                <XCircle className="h-4 w-4 text-amber-500" />
+                <span className="text-foreground">
+                  <strong>{unsyncedDocs.length}</strong> pending sync
                 </span>
               </div>
-              <div style={{ color: 'var(--muted)' }}>
+              <div className="text-muted-foreground">
                 {documents.length} total documents
               </div>
             </div>
 
             {/* Document List */}
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
               {documents.filter(d => d.status === 'complete').map(doc => (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between p-3 rounded-lg border"
-                  style={{ borderColor: 'var(--border)', background: 'var(--muted-bg)' }}
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/30 hover:border-indigo-500/30 transition-all"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <FileText className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--muted)' }} />
+                    <FileText className="h-4 w-4 flex-shrink-0 text-indigo-500" />
                     <div className="min-w-0">
                       <p 
-                        className="font-medium truncate text-sm"
-                        style={{ color: 'var(--foreground)' }}
+                        className="font-semibold truncate text-sm text-foreground"
                         title={doc.originalName}
                       >
                         {doc.originalName}
                       </p>
-                      <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                      <p className="text-xs text-muted-foreground">
                         {doc.totalChunks} chunks · {doc.fileSize}
                       </p>
                     </div>
@@ -209,12 +204,12 @@ export default function VectorDBPage() {
 
             {/* Sync All Button */}
             {unsyncedDocs.length > 0 && (
-              <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
-                <p className="text-sm mb-2" style={{ color: 'var(--muted)' }}>
-                  {unsyncedDocs.length} document{unsyncedDocs.length !== 1 ? 's' : ''} waiting to be synced
+              <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-xs">
+                <p className="text-muted-foreground">
+                  <strong className="text-amber-500">{unsyncedDocs.length}</strong> document{unsyncedDocs.length !== 1 ? 's' : ''} waiting to be synchronized
                 </p>
-                <p className="text-xs" style={{ color: 'var(--muted)' }}>
-                  Click the "Sync" button on each document to add it to the vector database
+                <p className="text-muted-foreground">
+                  Click "Sync" to index chunks in Pinecone Cloud
                 </p>
               </div>
             )}
@@ -223,30 +218,30 @@ export default function VectorDBPage() {
       </div>
 
       {/* Info Section */}
-      <div 
-        className="mt-6 p-4 rounded-xl border"
-        style={{ borderColor: 'var(--border)', background: 'var(--card-bg)' }}
-      >
-        <h3 className="font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
-          💡 How It Works
+      <div className="glass-card mt-6 p-6 rounded-2xl">
+        <h3 className="font-bold mb-4 text-foreground flex items-center gap-2">
+          <span>⚡ Pinecone Cloud Vector Architecture</span>
+          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            Active
+          </span>
         </h3>
-        <div className="grid md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="font-medium mb-1" style={{ color: 'var(--foreground)' }}>1. Local Embeddings</p>
-            <p style={{ color: 'var(--muted)' }}>
-              Uses Xenova/all-MiniLM-L6-v2 model running locally. First run downloads ~50MB model.
+        <div className="grid md:grid-cols-3 gap-5 text-xs">
+          <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-slate-800/50">
+            <p className="font-bold mb-1 text-foreground">1. Embeddings Generation</p>
+            <p className="text-muted-foreground leading-relaxed">
+              Uses Xenova all-MiniLM-L6-v2 (384 dimensions) with cosine distance normalization for pinpoint semantic match.
             </p>
           </div>
-          <div>
-            <p className="font-medium mb-1" style={{ color: 'var(--foreground)' }}>2. ChromaDB Storage</p>
-            <p style={{ color: 'var(--muted)' }}>
-              Vectors stored locally in /data/chroma/. No cloud services, 100% private.
+          <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-slate-800/50">
+            <p className="font-bold mb-1 text-foreground">2. Pinecone Serverless Index</p>
+            <p className="text-muted-foreground leading-relaxed">
+              Cloud-hosted in AWS us-east-1. Zero local storage limits, persistent vectors across all deployments with sub-50ms query latency.
             </p>
           </div>
-          <div>
-            <p className="font-medium mb-1" style={{ color: 'var(--foreground)' }}>3. Semantic Search</p>
-            <p style={{ color: 'var(--muted)' }}>
-              Search finds relevant content by meaning, not just keywords. Powered by cosine similarity.
+          <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-slate-800/50">
+            <p className="font-bold mb-1 text-foreground">3. Dual-Layer Semantic Retrieval</p>
+            <p className="text-muted-foreground leading-relaxed">
+              Queries retrieve the top-K relevant chunks with score thresholding before passing context to Gemini 2.5 Flash.
             </p>
           </div>
         </div>

@@ -214,35 +214,29 @@ function DocumentsContent() {
       
       {/* Stats Summary */}
       {stats && (
-        <div 
-          className="flex flex-wrap items-center gap-4 p-4 rounded-xl border mb-6"
-          style={{ 
-            backgroundColor: 'var(--card-bg)',
-            borderColor: 'var(--border-color)'
-          }}
-        >
+        <div className="glass-card flex flex-wrap items-center gap-4 p-4 rounded-2xl mb-6 shadow-xs">
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-indigo-500" />
-            <span style={{ color: 'var(--foreground)' }}>
+            <span className="text-foreground">
               <strong>{stats.totalDocuments}</strong> documents
             </span>
           </div>
-          <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
-          <span style={{ color: 'var(--muted)' }}>
+          <div className="w-px h-5 bg-slate-200 dark:bg-slate-800" />
+          <span className="text-muted-foreground">
             <strong>{stats.totalChunks.toLocaleString()}</strong> chunks
           </span>
-          <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
-          <span style={{ color: 'var(--muted)' }}>
+          <div className="w-px h-5 bg-slate-200 dark:bg-slate-800" />
+          <span className="text-muted-foreground">
             <strong>{stats.storageFormatted}</strong> storage
           </span>
-          <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
-          <span className="text-emerald-500">
+          <div className="w-px h-5 bg-slate-200 dark:bg-slate-800" />
+          <span className="text-emerald-600 dark:text-emerald-400 font-medium">
             <strong>{stats.documentsByStatus.complete}</strong> complete
           </span>
           {stats.documentsByStatus.error > 0 && (
             <>
-              <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
-              <span className="text-red-500">
+              <div className="w-px h-5 bg-slate-200 dark:bg-slate-800" />
+              <span className="text-red-500 font-medium">
                 <strong>{stats.documentsByStatus.error}</strong> errors
               </span>
             </>
@@ -252,17 +246,8 @@ function DocumentsContent() {
       
       {/* Upload Section */}
       {showUpload && (
-        <div 
-          className="mb-6 p-6 rounded-xl border"
-          style={{ 
-            backgroundColor: 'var(--card-bg)',
-            borderColor: 'var(--border-color)'
-          }}
-        >
-          <h2 
-            className="font-semibold mb-4"
-            style={{ color: 'var(--foreground)' }}
-          >
+        <div className="glass-card mb-6 p-6 rounded-2xl">
+          <h2 className="font-bold text-foreground mb-4">
             Upload Documents
           </h2>
           <FileUpload 

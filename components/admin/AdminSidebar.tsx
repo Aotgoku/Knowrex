@@ -116,21 +116,27 @@ export default function AdminSidebar() {
   
   const SidebarContent = () => (
     <>
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: 'var(--border-color)' }}>
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shrink-0">
-          <FileText className="w-6 h-6 text-white" />
+      {/* Brand Header */}
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-slate-200/80 dark:border-white/10">
+        <div className="relative group shrink-0">
+          <div className="absolute inset-0 bg-indigo-500 rounded-xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+          <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md border border-white/20">
+            <FileText className="w-5 h-5 text-white" />
+          </div>
         </div>
         {!isCollapsed && (
           <div className="overflow-hidden">
-            <h1 className="font-bold text-lg leading-tight" style={{ color: 'var(--foreground)' }}>Knowrex</h1>
-            <p className="text-xs" style={{ color: 'var(--muted)' }}>Operations Portal</p>
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-extrabold text-base leading-tight text-foreground tracking-tight">Knowrex</h1>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase">OS</span>
+            </div>
+            <p className="text-[11px] text-muted font-medium">Enterprise AI Portal</p>
           </div>
         )}
       </div>
-      
+
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto custom-scrollbar">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -146,19 +152,27 @@ export default function AdminSidebar() {
               key={item.href}
               href={item.href}
               onClick={() => setIsMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 cursor-pointer ${
                 active 
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-semibold shadow-xs' 
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                  ? 'bg-gradient-to-r from-indigo-500/15 via-purple-500/10 to-transparent border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs' 
+                  : 'text-muted hover:text-foreground hover:bg-slate-100/70 dark:hover:bg-slate-800/50 border border-transparent font-medium'
               }`}
-              style={!active ? { color: 'var(--foreground)' } : {}}
             >
-              <Icon className={`w-5 h-5 shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
+              {active && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-500 rounded-r-full shadow-sm shadow-indigo-500" />
+              )}
+              <Icon className={`w-4 h-4 shrink-0 ${isCollapsed ? 'mx-auto' : ''} ${active ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
               {!isCollapsed && (
-                <span className="font-medium flex-1 text-sm truncate">{item.label}</span>
+                <span className="text-xs flex-1 truncate">{item.label}</span>
               )}
               {!isCollapsed && item.badge && (
-                <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <span className={`px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider rounded-md uppercase shrink-0 border ${
+                  item.badge === 'LIVE'
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                    : item.badge === 'GUARDRAILS'
+                      ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20'
+                      : 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                }`}>
                   {item.badge}
                 </span>
               )}
@@ -167,15 +181,33 @@ export default function AdminSidebar() {
         })}
       </nav>
 
+      {/* Live System Connection Heartbeat */}
+      <div className="mx-3 my-2 p-2.5 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 dark:bg-emerald-950/20 flex items-center gap-2.5">
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        {!isCollapsed && (
+          <div className="overflow-hidden flex-1">
+            <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+              Pinecone Cloud
+            </div>
+            <div className="text-[9px] text-muted truncate">
+              AWS us-east-1 • Healthy
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* User Profile Card (RBAC Badge) */}
       {currentUser && (
-        <div className="p-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
-          <div className={`p-2.5 rounded-xl border flex items-center gap-3 ${
+        <div className="p-3 border-t border-slate-200/80 dark:border-white/10">
+          <div className={`p-2.5 rounded-2xl border flex items-center gap-2.5 ${
             currentUser.role === 'admin'
-              ? 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50'
-              : 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50'
+              ? 'bg-indigo-50/60 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/60'
+              : 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60'
           }`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm ${
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
               currentUser.role === 'admin' 
                 ? 'bg-indigo-600 text-white' 
                 : 'bg-emerald-600 text-white'
@@ -184,15 +216,15 @@ export default function AdminSidebar() {
             </div>
 
             {!isCollapsed && (
-              <div className="overflow-hidden flex-1">
-                <div className="font-semibold text-xs truncate" style={{ color: 'var(--foreground)' }}>
+              <div className="overflow-hidden flex-1 min-w-0">
+                <div className="font-bold text-xs truncate text-foreground">
                   {currentUser.name}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider ${
+                  <span className={`text-[8px] font-extrabold px-1.5 py-0.2 rounded-full uppercase tracking-wider ${
                     currentUser.role === 'admin'
-                      ? 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300'
-                      : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
+                      ? 'bg-indigo-100 dark:bg-indigo-900/70 text-indigo-700 dark:text-indigo-300'
+                      : 'bg-emerald-100 dark:bg-emerald-900/70 text-emerald-700 dark:text-emerald-300'
                   }`}>
                     {currentUser.role === 'admin' ? 'Super Admin' : 'Support Agent'}
                   </span>
@@ -204,17 +236,17 @@ export default function AdminSidebar() {
       )}
       
       {/* Footer actions */}
-      <div className="p-3 border-t space-y-1" style={{ borderColor: 'var(--border-color)' }}>
+      <div className="p-3 border-t border-slate-200/80 dark:border-white/10 space-y-1">
         {/* Dark mode toggle */}
         <button
+          type="button"
           onClick={toggleDarkMode}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer text-sm"
-          style={{ color: 'var(--foreground)' }}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer text-xs font-semibold text-muted hover:text-foreground"
         >
           {isDarkMode ? (
-            <Sun className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'mx-auto' : ''}`} />
+            <Sun className={`w-4 h-4 text-amber-400 ${isCollapsed ? 'mx-auto' : ''}`} />
           ) : (
-            <Moon className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'mx-auto' : ''}`} />
+            <Moon className={`w-4 h-4 ${isCollapsed ? 'mx-auto' : ''}`} />
           )}
           {!isCollapsed && <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
@@ -222,9 +254,10 @@ export default function AdminSidebar() {
         {/* Logout Button */}
         {currentUser && (
           <button
+            type="button"
             onClick={handleLogout}
             disabled={loggingOut}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 cursor-pointer text-sm"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 cursor-pointer text-xs font-semibold"
           >
             <LogOut className={`w-4 h-4 ${isCollapsed ? 'mx-auto' : ''}`} />
             {!isCollapsed && <span>{loggingOut ? 'Signing out...' : 'Sign Out'}</span>}
@@ -233,12 +266,12 @@ export default function AdminSidebar() {
         
         {/* Collapse button - desktop only */}
         <button
+          type="button"
           onClick={() => setIsCollapsed(prev => !prev)}
-          className="hidden md:flex w-full items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer text-sm"
-          style={{ color: 'var(--muted)' }}
+          className="hidden md:flex w-full items-center gap-3 px-3 py-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer text-xs text-muted hover:text-foreground"
         >
           <ChevronLeft className={`w-4 h-4 transition-transform ${isCollapsed ? 'rotate-180 mx-auto' : ''}`} />
-          {!isCollapsed && <span>Collapse</span>}
+          {!isCollapsed && <span>Collapse Sidebar</span>}
         </button>
       </div>
     </>

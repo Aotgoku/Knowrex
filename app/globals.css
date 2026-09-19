@@ -1,52 +1,62 @@
 @import "tailwindcss";
 
 /* ============================================
-   BizAssist AI - Global Styles
-   A professional chat interface with smooth 
-   animations and modern design
+   Knowrex AI - Obsidian Glass Design System
+   Sleek enterprise aesthetic with frosted glass,
+   ambient glow meshes, and fluid micro-animations
    ============================================ */
 
 :root {
-  /* Light mode colors */
+  /* Obsidian Glass Light Mode */
   --background: #f8fafc;
-  --foreground: #0f172a;
-  --card-bg: #ffffff;
-  --input-bg: #ffffff;
+  --foreground: #090d16;
+  --card-bg: rgba(255, 255, 255, 0.82);
+  --card-border: rgba(226, 232, 240, 0.85);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(226, 232, 240, 0.75);
+  --glass-glow: rgba(99, 102, 241, 0.12);
+  --input-bg: rgba(255, 255, 255, 0.9);
   --border-color: #e2e8f0;
   --primary: #6366f1;
   --primary-dark: #4f46e5;
+  --primary-glow: rgba(99, 102, 241, 0.25);
   --secondary: #8b5cf6;
-  --user-bubble: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --ai-bubble: #ffffff;
-  --ai-text: #1e293b;
+  --user-bubble: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --ai-bubble: rgba(255, 255, 255, 0.9);
+  --ai-text: #0f172a;
   --muted: #64748b;
   --error: #ef4444;
-  --success: #22c55e;
+  --success: #10b981;
 }
 
-/* Dark mode colors */
+/* Obsidian Glass Dark Mode (Midnight Slate) */
 .dark {
-  --background: #000000;
-  --foreground: #f1f5f9;
-  --card-bg: #0a0a0a;
-  --input-bg: #0a0a0a;
-  --border-color: #1a1a1a;
+  --background: #090d16;
+  --foreground: #f8fafc;
+  --card-bg: rgba(15, 23, 42, 0.68);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(15, 23, 42, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-glow: rgba(129, 140, 248, 0.18);
+  --input-bg: rgba(15, 23, 42, 0.85);
+  --border-color: rgba(255, 255, 255, 0.08);
   --primary: #818cf8;
   --primary-dark: #6366f1;
+  --primary-glow: rgba(129, 140, 248, 0.25);
   --secondary: #a78bfa;
   --user-bubble: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --ai-bubble: #1a1a1a;
-  --ai-text: #f1f5f9;
+  --ai-bubble: rgba(15, 23, 42, 0.75);
+  --ai-text: #f8fafc;
   --muted: #94a3b8;
   --error: #f87171;
-  --success: #4ade80;
+  --success: #34d399;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 * {
@@ -57,7 +67,89 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.015em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.028em;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* ============================================
+   Obsidian Glass Core Utility Classes
+   ============================================ */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+.glow-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glow-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 12px 30px -8px rgba(99, 102, 241, 0.25);
+}
+
+.shimmer-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-badge::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 80%
+  );
+  transform: rotate(30deg);
+  animation: badgeShimmer 3.5s infinite;
+}
+
+@keyframes badgeShimmer {
+  0% { transform: translateX(-100%) rotate(30deg); }
+  20%, 100% { transform: translateX(100%) rotate(30deg); }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #6366f1);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shine 4s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
 }
 
 /* ============================================

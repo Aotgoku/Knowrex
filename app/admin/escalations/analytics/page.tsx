@@ -126,66 +126,70 @@ export default function AnalyticsPage() {
   const stats = escalationStats;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60 dark:border-slate-800/60">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Escalation Analytics</h1>
-          <p className="text-gray-500">Performance metrics and knowledge base growth</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+            Escalation & Knowledge Analytics
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Operational telemetry, human resolution performance, and autonomous knowledge discovery
+          </p>
         </div>
         <Link
           href="/admin/escalations"
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:bg-slate-50 dark:hover:bg-slate-900 text-foreground font-semibold text-xs transition-colors shadow-xs"
         >
-          ← Back to Escalations
+          ← Back to Escalation Desk
         </Link>
       </div>
 
       {/* Overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="glass-card glow-card p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Escalations</p>
-              <p className="text-3xl font-bold text-gray-900">{stats?.total || 0}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Escalations</p>
+              <p className="text-3xl font-black text-foreground mt-1">{stats?.total || 0}</p>
             </div>
-            <div className="text-4xl">📊</div>
+            <div className="text-3xl">📊</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-green-200">
+        <div className="glass-card glow-card p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-green-600">Resolution Rate</p>
-              <p className="text-3xl font-bold text-green-700">
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Resolution Rate</p>
+              <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
                 {stats?.total ? Math.round((stats.resolved / stats.total) * 100) : 0}%
               </p>
             </div>
-            <div className="text-4xl">✅</div>
+            <div className="text-3xl">✅</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-blue-200">
+        <div className="glass-card glow-card p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-blue-600">Avg Resolution Time</p>
-              <p className="text-3xl font-bold text-blue-700">
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Avg Resolution</p>
+              <p className="text-3xl font-black text-blue-600 dark:text-blue-400 mt-1">
                 {stats?.avgResolutionTimeHours.toFixed(1) || 0}h
               </p>
             </div>
-            <div className="text-4xl">⏱️</div>
+            <div className="text-3xl">⏱️</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-purple-200">
+        <div className="glass-card glow-card p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-purple-600">User Satisfaction</p>
-              <p className="text-3xl font-bold text-purple-700">
+              <p className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">User Satisfaction</p>
+              <p className="text-3xl font-black text-purple-600 dark:text-purple-400 mt-1">
                 {Math.round((stats?.userSatisfactionRate || 0) * 100)}%
               </p>
             </div>
-            <div className="text-4xl">😊</div>
+            <div className="text-3xl">😊</div>
           </div>
         </div>
       </div>
@@ -193,106 +197,105 @@ export default function AnalyticsPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Status Distribution */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="font-semibold text-gray-900 mb-4">Status Distribution</h3>
+        <div className="glass-card p-6 rounded-2xl">
+          <h3 className="font-bold text-foreground mb-4">Status Distribution</h3>
           <div className="space-y-4">
             {[
-              { label: 'Pending', value: stats?.pending || 0, color: 'bg-gray-400' },
-              { label: 'Assigned', value: stats?.assigned || 0, color: 'bg-blue-400' },
-              { label: 'In Progress', value: stats?.inProgress || 0, color: 'bg-yellow-400' },
-              { label: 'Resolved', value: stats?.resolved || 0, color: 'bg-green-400' },
-              { label: 'Rejected', value: stats?.rejected || 0, color: 'bg-red-400' },
+              { label: 'Pending', value: stats?.pending || 0, color: 'bg-amber-500' },
+              { label: 'Assigned', value: stats?.assigned || 0, color: 'bg-blue-500' },
+              { label: 'In Progress', value: stats?.inProgress || 0, color: 'bg-indigo-500' },
+              { label: 'Resolved', value: stats?.resolved || 0, color: 'bg-emerald-500' },
+              { label: 'Rejected', value: stats?.rejected || 0, color: 'bg-rose-500' },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-3">
-                <div className="w-24 text-sm text-gray-600">{item.label}</div>
-                <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+                <div className="w-24 text-xs font-medium text-muted-foreground">{item.label}</div>
+                <div className="flex-1 h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${item.color} transition-all duration-500`}
+                    className={`h-full ${item.color} rounded-full transition-all duration-500`}
                     style={{
                       width: `${stats?.total ? (item.value / stats.total) * 100 : 0}%`
                     }}
                   />
                 </div>
-                <div className="w-10 text-sm font-medium text-right">{item.value}</div>
+                <div className="w-10 text-xs font-bold text-foreground text-right">{item.value}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Urgency Breakdown */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="font-semibold text-gray-900 mb-4">Urgency Breakdown</h3>
+        <div className="glass-card p-6 rounded-2xl">
+          <h3 className="font-bold text-foreground mb-4">Urgency Breakdown</h3>
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-red-50 rounded-lg text-center">
-              <div className="text-3xl font-bold text-red-600">
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+              <div className="text-2xl font-black text-red-600 dark:text-red-400">
                 {stats?.byUrgency.critical || 0}
               </div>
-              <div className="text-sm text-red-600">Critical</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mt-1">Critical</div>
             </div>
-            <div className="p-4 bg-orange-50 rounded-lg text-center">
-              <div className="text-3xl font-bold text-orange-600">
+            <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-center">
+              <div className="text-2xl font-black text-orange-600 dark:text-orange-400">
                 {stats?.byUrgency.high || 0}
               </div>
-              <div className="text-sm text-orange-600">High</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 mt-1">High</div>
             </div>
-            <div className="p-4 bg-yellow-50 rounded-lg text-center">
-              <div className="text-3xl font-bold text-yellow-600">
+            <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center">
+              <div className="text-2xl font-black text-yellow-600 dark:text-yellow-400">
                 {stats?.byUrgency.medium || 0}
               </div>
-              <div className="text-sm text-yellow-600">Medium</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-yellow-600 dark:text-yellow-400 mt-1">Medium</div>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg text-center">
-              <div className="text-3xl font-bold text-green-600">
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+              <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                 {stats?.byUrgency.low || 0}
               </div>
-              <div className="text-sm text-green-600">Low</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mt-1">Low</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Knowledge Base Section */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="glass-card p-6 rounded-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-900">Knowledge Base Growth</h3>
-          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+          <h3 className="font-bold text-foreground">Knowledge Base Growth</h3>
+          <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-semibold border border-emerald-500/20">
             +{kbStats?.recentlyAdded || 0} this week
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* KB Stats */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4">
-            <div className="text-4xl font-bold text-blue-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60">
+            <div className="text-3xl font-black text-indigo-600 dark:text-indigo-400">
               {kbStats?.totalFAQs || 0}
             </div>
-            <div className="text-sm text-blue-600">Total FAQs Created</div>
+            <div className="text-xs font-medium text-muted-foreground mt-1">Total FAQs Created</div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4">
-            <div className="text-4xl font-bold text-green-700">
+          <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60">
+            <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
               {stats?.addedToKBCount || 0}
             </div>
-            <div className="text-sm text-green-600">Escalations → KB</div>
+            <div className="text-xs font-medium text-muted-foreground mt-1">Escalations → KB Promoted</div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg p-4">
-            <div className="text-4xl font-bold text-purple-700">
+          <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60">
+            <div className="text-3xl font-black text-purple-600 dark:text-purple-400">
               {Object.keys(kbStats?.byCategory || {}).length}
             </div>
-            <div className="text-sm text-purple-600">Categories</div>
+            <div className="text-xs font-medium text-muted-foreground mt-1">Active Categories</div>
           </div>
         </div>
 
         {/* Categories */}
         {kbStats && Object.keys(kbStats.byCategory).length > 0 && (
           <div className="mt-6">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">FAQs by Category</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">FAQs by Category</h4>
             <div className="flex flex-wrap gap-2">
               {Object.entries(kbStats.byCategory).map(([cat, count]) => (
                 <span
                   key={cat}
-                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                  className="px-3 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-foreground border border-slate-200 dark:border-slate-700"
                 >
                   {cat}: {count}
                 </span>
@@ -302,69 +305,27 @@ export default function AnalyticsPage() {
         )}
       </div>
 
-      {/* Performance Metrics */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h3 className="font-semibold text-gray-900 mb-4">Performance Insights</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="text-5xl mb-2">
-              {stats?.recentTrend === 'increasing' ? '📈' :
-               stats?.recentTrend === 'decreasing' ? '📉' : '➡️'}
-            </div>
-            <div className="font-medium text-gray-900">Escalation Trend</div>
-            <div className="text-sm text-gray-500 capitalize">{stats?.recentTrend || 'stable'}</div>
-          </div>
-
-          <div className="text-center">
-            <div className="text-5xl mb-2">
-              {(stats?.userSatisfactionRate || 0) >= 0.8 ? '🌟' :
-               (stats?.userSatisfactionRate || 0) >= 0.6 ? '👍' : '⚠️'}
-            </div>
-            <div className="font-medium text-gray-900">User Sentiment</div>
-            <div className="text-sm text-gray-500">
-              {(stats?.userSatisfactionRate || 0) >= 0.8 ? 'Excellent' :
-               (stats?.userSatisfactionRate || 0) >= 0.6 ? 'Good' : 'Needs Improvement'}
-            </div>
-          </div>
-
-          <div className="text-center">
-            <div className="text-5xl mb-2">
-              {(stats?.avgResolutionTimeHours || 24) <= 4 ? '⚡' :
-               (stats?.avgResolutionTimeHours || 24) <= 24 ? '🕐' : '🐢'}
-            </div>
-            <div className="font-medium text-gray-900">Response Speed</div>
-            <div className="text-sm text-gray-500">
-              {(stats?.avgResolutionTimeHours || 24) <= 4 ? 'Fast' :
-               (stats?.avgResolutionTimeHours || 24) <= 24 ? 'Normal' : 'Slow'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ============================================
-          Autonomous Knowledge Gap Detection & Auto-Doc Generator
-          Enterprise Self-Healing Knowledge Loop
-          ============================================ */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-indigo-100">
+      {/* Autonomous Knowledge Gap Detection & Auto-Doc Generator */}
+      <div className="glass-card p-6 rounded-2xl border-indigo-500/30">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="p-1.5 bg-indigo-100 text-indigo-700 rounded-lg">
+            <div className="flex items-center gap-2.5 mb-1">
+              <span className="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
                 <BrainCircuit className="w-5 h-5" />
               </span>
-              <h3 className="font-bold text-gray-900 text-lg">Autonomous Knowledge Gap Detection</h3>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Self-Healing AI Loop
+              <h3 className="font-bold text-foreground text-lg">Autonomous Knowledge Gap Detection</h3>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                Self-Healing Loop
               </span>
             </div>
-            <p className="text-sm text-gray-500">
-              AI clusters repeated customer escalations & low-confidence inquiries with no documentation coverage.
+            <p className="text-xs text-muted-foreground">
+              AI clusters repeated customer inquiries with no current document coverage.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5" />
               <span>{gaps.filter(g => g.status === 'missing').length} Missing Policies Detected</span>
             </span>
           </div>
@@ -379,41 +340,41 @@ export default function AnalyticsPage() {
             return (
               <div 
                 key={gap.id}
-                className={`p-5 rounded-xl border transition-all flex flex-col justify-between ${
+                className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
                   isIndexed 
-                    ? 'bg-emerald-50/50 border-emerald-200'
-                    : 'bg-gray-50/70 hover:bg-gray-50 border-gray-200 shadow-sm'
+                    ? 'bg-emerald-500/5 border-emerald-500/30'
+                    : 'bg-slate-50/50 dark:bg-slate-900/30 border-slate-200/70 dark:border-slate-800/70 hover:border-indigo-500/40'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-white border border-gray-200 text-gray-700">
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-card border border-slate-200 dark:border-slate-800 text-foreground">
                       {gap.category}
                     </span>
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded uppercase ${
-                        gap.urgency === 'critical' ? 'bg-red-100 text-red-700 border border-red-200' :
-                        gap.urgency === 'high' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                        'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded uppercase ${
+                        gap.urgency === 'critical' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' :
+                        gap.urgency === 'high' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20' :
+                        'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20'
                       }`}>
-                        {gap.urgency} Priority
+                        {gap.urgency}
                       </span>
-                      <span className="text-xs font-semibold text-gray-500">
+                      <span className="text-xs font-semibold text-muted-foreground">
                         {gap.inquiryCount} Inquiries
                       </span>
                     </div>
                   </div>
 
-                  <h4 className="font-semibold text-gray-900 mb-2 leading-snug">
+                  <h4 className="font-bold text-foreground mb-2 leading-snug">
                     {gap.topic}
                   </h4>
 
                   {/* Sample Customer Inquiries */}
                   <div className="mb-4">
-                    <p className="text-xs font-medium text-gray-500 mb-1.5">Unaddressed Customer Inquiries:</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1.5">Customer Inquiries:</p>
                     <ul className="space-y-1">
                       {gap.sampleQuestions.slice(0, 2).map((q, idx) => (
-                        <li key={idx} className="text-xs text-gray-600 italic bg-white/70 px-2 py-1 rounded border border-gray-100 truncate">
+                        <li key={idx} className="text-xs text-muted-foreground italic bg-card px-2.5 py-1 rounded-lg border border-slate-200/50 dark:border-slate-800/50 truncate">
                           &ldquo;{q}&rdquo;
                         </li>
                       ))}
@@ -422,22 +383,22 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Action Row */}
-                <div className="pt-3 border-t border-gray-200/80 flex items-center justify-between">
+                <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between">
                   {isIndexed ? (
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4" />
                       <span>Indexed in Pinecone Cloud</span>
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-500">
-                      Coverage: <strong className="text-red-600">0% (Missing Policy)</strong>
+                    <div className="text-xs text-muted-foreground">
+                      Coverage: <strong className="text-red-500">0% (Missing Policy)</strong>
                     </div>
                   )}
 
                   {isIndexed ? (
                     <Link
                       href="/admin/documents"
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-colors"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-colors border border-emerald-500/20"
                     >
                       <FileText className="w-3.5 h-3.5" /> View in Docs
                     </Link>
@@ -445,18 +406,17 @@ export default function AnalyticsPage() {
                     <button
                       onClick={() => handleGenerateDoc(gap)}
                       disabled={isGenerating || generatingGapId !== null}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-95 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
-                      title="Synthesize documentation with Gemini and vectorize into Pinecone"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 rounded-xl shadow-xs transition-all disabled:opacity-50 cursor-pointer"
                     >
                       {isGenerating ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-                          <span>Synthesizing & Vectorizing...</span>
+                          <span>Synthesizing...</span>
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                          <span>✨ Auto-Draft & Index to Pinecone</span>
+                          <span>Auto-Draft to Pinecone</span>
                         </>
                       )}
                     </button>
@@ -470,55 +430,55 @@ export default function AnalyticsPage() {
 
       {/* Generated Document Success Modal */}
       {generatedDocModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="p-5 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass-card rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 shadow-2xl">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
               <div className="flex items-center gap-2.5">
-                <span className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                  <CheckCircle2 className="w-5 h-5" />
                 </span>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-base">Policy Synthesized & Indexed</h3>
-                  <p className="text-xs text-emerald-700 font-medium">
-                    ✓ {generatedDocModal.chunksIndexed} chunks successfully embedded into Pinecone Cloud Vector Store
+                  <h3 className="font-bold text-foreground text-base">Policy Synthesized & Indexed</h3>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                    ✓ {generatedDocModal.chunksIndexed} chunks successfully embedded into Pinecone Cloud
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => setGeneratedDocModal(null)}
-                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 text-xl"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 overflow-y-auto flex-1 text-sm space-y-4">
-              <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs text-gray-600">
-                <div className="font-semibold text-gray-800 mb-1">Generated Document Details:</div>
-                <div>Filename: <code className="text-indigo-600">{generatedDocModal.filename}</code></div>
-                <div>Destination: <strong className="text-emerald-700">Pinecone Serverless Index (knowrex-index)</strong></div>
-                <div>Status: <span className="text-emerald-700 font-semibold">Active for Customer RAG Queries</span></div>
+              <div className="p-3.5 rounded-xl border border-slate-200/70 dark:border-slate-800/70 bg-slate-50/50 dark:bg-slate-900/30 text-xs text-muted-foreground space-y-1">
+                <div className="font-bold text-foreground mb-1">Generated Document Details:</div>
+                <div>Filename: <code className="text-indigo-600 dark:text-indigo-400 font-mono">{generatedDocModal.filename}</code></div>
+                <div>Destination: <strong className="text-emerald-600 dark:text-emerald-400">Pinecone Serverless Index (knowrex-index)</strong></div>
+                <div>Status: <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Live for Customer RAG Inquiries</span></div>
               </div>
 
               <div>
-                <h4 className="font-semibold text-gray-800 text-xs uppercase tracking-wider mb-2">Synthesized Policy Preview:</h4>
-                <div className="bg-gray-900 text-gray-100 p-4 rounded-xl text-xs font-mono whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed custom-scrollbar">
+                <h4 className="font-bold text-foreground text-xs uppercase tracking-wider mb-2">Synthesized Policy Preview:</h4>
+                <div className="bg-slate-950 text-slate-100 p-4 rounded-xl text-xs font-mono whitespace-pre-wrap max-h-64 overflow-y-auto leading-relaxed custom-scrollbar border border-slate-800">
                   {generatedDocModal.fullContent}
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
               <Link
                 href="/admin/documents"
-                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
               >
                 <span>View in Document Management</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
               <button
                 onClick={() => setGeneratedDocModal(null)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
               >
                 Close & Continue
               </button>
@@ -528,23 +488,25 @@ export default function AnalyticsPage() {
       )}
 
       {/* Recommendations */}
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-6 text-white">
-        <h3 className="font-semibold mb-4">💡 Recommendations</h3>
-        <ul className="space-y-2 text-blue-100">
+      <div className="glass-panel rounded-2xl p-6 border border-indigo-500/30 bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-slate-900/20">
+        <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
+          <span>💡 AI Operational Recommendations</span>
+        </h3>
+        <ul className="space-y-1.5 text-xs text-muted-foreground">
           {(stats?.pending || 0) > 5 && (
-            <li>• {stats?.pending} escalations pending - consider assigning more resources</li>
+            <li>• <strong className="text-foreground">{stats?.pending} escalations</strong> pending in queue - recommend assigning additional support agents.</li>
           )}
           {(stats?.avgResolutionTimeHours || 0) > 24 && (
-            <li>• Resolution time is high - look for ways to speed up responses</li>
+            <li>• Resolution time is currently elevated - consider standardizing quick macro responses.</li>
           )}
           {(stats?.addedToKBCount || 0) < (stats?.resolved || 0) * 0.5 && (
-            <li>• Low KB integration rate - encourage adding resolved answers to knowledge base</li>
+            <li>• Low KB promotion rate - enable "Save answer to Knowledge Base" on resolved escalations to train Pinecone.</li>
           )}
           {(stats?.byUrgency?.critical || 0) > 0 && (
-            <li>• {stats?.byUrgency.critical} critical escalations need immediate attention</li>
+            <li>• <strong className="text-red-500">{stats?.byUrgency.critical} critical escalations</strong> require immediate human intervention.</li>
           )}
           {(stats?.total || 0) === 0 && (
-            <li>• No escalations yet - your AI is performing well! 🎉</li>
+            <li>• All customer questions currently answered autonomously by Pinecone RAG! 🎉</li>
           )}
         </ul>
       </div>
