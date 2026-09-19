@@ -74,10 +74,12 @@ export interface ChatInputProps {
   isSpeaking?: boolean;
   isVoiceSupported?: boolean;
   isMuted?: boolean;
+  permissionDenied?: boolean;
   externalMessage?: string;
   onToggleListen?: () => void;
   onToggleMute?: () => void;
   onStopSpeaking?: () => void;
+  onDismissPermissionError?: () => void;
 }
 
 /**

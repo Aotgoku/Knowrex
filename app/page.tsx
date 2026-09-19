@@ -950,10 +950,12 @@ export default function ChatPage() {
         isSpeaking={voiceChat.isSpeaking}
         isVoiceSupported={voiceChat.isSupported}
         isMuted={voiceChat.isMuted}
+        permissionDenied={voiceChat.permissionDenied}
         externalMessage={voiceTranscript}
         onToggleListen={handleToggleVoice}
         onToggleMute={voiceChat.toggleMute}
         onStopSpeaking={voiceChat.stopSpeaking}
+        onDismissPermissionError={voiceChat.dismissPermissionError}
       />
 
       {/* ============================================

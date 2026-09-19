@@ -8,11 +8,12 @@ export interface UseVoiceChatReturn {
   isSupported: boolean;
   isMuted: boolean;
   permissionDenied: boolean;
-  startListening: (onInterim: (text: string) => void, onFinal?: (text: string) => void) => void;
+  startListening: (onInterim: (text: string) => void, onFinal?: (text: string) => void) => Promise<void>;
   stopListening: () => void;
   speakText: (rawMarkdown: string) => void;
   stopSpeaking: () => void;
   toggleMute: () => void;
+  dismissPermissionError: () => void;
 }
 
 /**
@@ -92,9 +93,13 @@ export function useVoiceChat(): UseVoiceChatReturn {
 
   /**
    * Start microphone capture with live transcription
+   * Production Best Practice:
+   * 1. Proactively triggers browser microphone permission prompt via getUserMedia
+   * 2. Releases the stream immediately so SpeechRecognition can bind hardware
+   * 3. Handles 'not-allowed' error gracefully with permissionDenied state
    */
   const startListening = useCallback(
-    (onInterim: (text: string) => void, onFinal?: (text: string) => void) => {
+    async (onInterim: (text: string) => void, onFinal?: (text: string) => void) => {
       if (!recognitionRef.current) {
         alert('Voice speech recognition is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari.');
         return;
@@ -108,12 +113,32 @@ export function useVoiceChat(): UseVoiceChatReturn {
 
       setPermissionDenied(false);
 
+      // Proactively prompt user for microphone permission if supported
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Stop audio tracks immediately to release hardware lock so SpeechRecognition can access mic
+          stream.getTracks().forEach((track) => track.stop());
+        } catch (mediaErr: any) {
+          console.warn('[Voice AI] Microphone permission prompt result:', mediaErr);
+          if (
+            mediaErr.name === 'NotAllowedError' || 
+            mediaErr.name === 'PermissionDeniedError' ||
+            mediaErr.message?.includes('Permission denied')
+          ) {
+            setPermissionDenied(true);
+            return;
+          }
+        }
+      }
+
       try {
         const recognition = recognitionRef.current;
         let finalAccumulated = '';
 
         recognition.onstart = () => {
           setIsListening(true);
+          setPermissionDenied(false);
         };
 
         recognition.onresult = (event: any) => {
@@ -135,7 +160,6 @@ export function useVoiceChat(): UseVoiceChatReturn {
           console.warn('[Voice AI] Recognition error:', event.error);
           if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
             setPermissionDenied(true);
-            alert('Microphone access was denied. Please allow microphone access in your browser address bar to use Voice Mode.');
           }
           setIsListening(false);
         };
@@ -237,6 +261,13 @@ export function useVoiceChat(): UseVoiceChatReturn {
     });
   }, []);
 
+  /**
+   * Dismiss permission denied warning
+   */
+  const dismissPermissionError = useCallback(() => {
+    setPermissionDenied(false);
+  }, []);
+
   return {
     isListening,
     isSpeaking,
@@ -247,6 +278,7 @@ export function useVoiceChat(): UseVoiceChatReturn {
     stopListening,
     speakText,
     stopSpeaking,
-    toggleMute
+    toggleMute,
+    dismissPermissionError
   };
 }

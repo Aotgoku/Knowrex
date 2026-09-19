@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent, ClipboardEvent } from 'react';
-import { Send, Loader2, Paperclip, X, Image as ImageIcon, Mic, MicOff, Volume2, VolumeX, Square } from 'lucide-react';
+import { Send, Loader2, Paperclip, X, Image as ImageIcon, Mic, MicOff, Volume2, VolumeX, Square, AlertCircle } from 'lucide-react';
 import { MessageAttachment, ChatInputProps } from '@/types/chat';
 
 // ============================================
@@ -26,10 +26,12 @@ export default function ChatInput({
   isSpeaking = false,
   isVoiceSupported = false,
   isMuted = false,
+  permissionDenied = false,
   externalMessage,
   onToggleListen,
   onToggleMute,
-  onStopSpeaking
+  onStopSpeaking,
+  onDismissPermissionError
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [attachedImage, setAttachedImage] = useState<MessageAttachment | null>(null);
@@ -196,6 +198,28 @@ export default function ChatInput({
             >
               <X className="w-4 h-4" />
             </button>
+          </div>
+        )}
+
+        {/* Microphone Permission Warning Banner */}
+        {permissionDenied && (
+          <div className="mb-2 flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl border bg-amber-50/95 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-medium animate-in fade-in slide-in-from-bottom-1 shadow-sm">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>
+                Microphone access blocked. Click the lock/tune icon in your browser address bar to allow microphone permissions.
+              </span>
+            </div>
+            {onDismissPermissionError && (
+              <button
+                type="button"
+                onClick={onDismissPermissionError}
+                className="p-1 rounded-full hover:bg-amber-200/60 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 transition-colors shrink-0 cursor-pointer"
+                title="Dismiss"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         )}
 
