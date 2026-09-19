@@ -1,32 +1,47 @@
 'use client';
 
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent, ClipboardEvent } from 'react';
-import { Send, Loader2, Paperclip, X, Image as ImageIcon } from 'lucide-react';
-import { MessageAttachment } from '@/types/chat';
+import { Send, Loader2, Paperclip, X, Image as ImageIcon, Mic, MicOff, Volume2, VolumeX, Square } from 'lucide-react';
+import { MessageAttachment, ChatInputProps } from '@/types/chat';
 
 // ============================================
 // ChatInput Component
-// A polished input field with Multimodal Vision attachment support:
+// A polished input field with Multimodal Vision & Voice AI support:
 // - Auto-resize textarea
 // - Image/Screenshot attachment picker + drag & paste
+// - Native Web Speech API Voice Mode with live waveform
+// - AI Text-to-Speech natural voice readout toggle
 // - Character counter
 // - Enter to send (Shift+Enter for new line)
 // ============================================
 
-interface ChatInputProps {
-  onSendMessage: (message: string, image?: MessageAttachment) => void;
-  isLoading: boolean;
-  disabled?: boolean;
-}
-
 // Maximum characters allowed in a single message
 const MAX_CHARACTERS = 2000;
 
-export default function ChatInput({ onSendMessage, isLoading, disabled = false }: ChatInputProps) {
+export default function ChatInput({ 
+  onSendMessage, 
+  isLoading, 
+  disabled = false,
+  isListening = false,
+  isSpeaking = false,
+  isVoiceSupported = false,
+  isMuted = false,
+  externalMessage,
+  onToggleListen,
+  onToggleMute,
+  onStopSpeaking
+}: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [attachedImage, setAttachedImage] = useState<MessageAttachment | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync external voice transcript if provided
+  useEffect(() => {
+    if (externalMessage !== undefined && externalMessage !== '') {
+      setMessage(externalMessage);
+    }
+  }, [externalMessage]);
 
   // Auto-resize textarea based on content
   useEffect(() => {
@@ -184,6 +199,43 @@ export default function ChatInput({ onSendMessage, isLoading, disabled = false }
           </div>
         )}
 
+        {/* Voice AI Status Banners */}
+        {isListening && (
+          <div className="mb-2 flex items-center justify-between px-3.5 py-1.5 rounded-xl border bg-red-50/90 dark:bg-red-950/40 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 text-xs font-medium animate-in fade-in slide-in-from-bottom-1">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </span>
+              <span>Listening to your voice... Speak your question</span>
+            </div>
+            <div className="flex items-center gap-0.5 h-3.5">
+              <span className="w-0.5 h-3 bg-red-500 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]"></span>
+              <span className="w-0.5 h-2 bg-red-500 rounded-full animate-[pulse_0.4s_ease-in-out_infinite]"></span>
+              <span className="w-0.5 h-4 bg-red-500 rounded-full animate-[pulse_0.5s_ease-in-out_infinite]"></span>
+              <span className="w-0.5 h-2.5 bg-red-500 rounded-full animate-[pulse_0.3s_ease-in-out_infinite]"></span>
+            </div>
+          </div>
+        )}
+
+        {isSpeaking && (
+          <div className="mb-2 flex items-center justify-between px-3.5 py-1.5 rounded-xl border bg-purple-50/90 dark:bg-purple-950/40 border-purple-200 dark:border-purple-900/60 text-purple-700 dark:text-purple-300 text-xs font-medium animate-in fade-in slide-in-from-bottom-1">
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4 animate-bounce text-purple-600 dark:text-purple-400" />
+              <span>AI Speaking response out loud...</span>
+            </div>
+            {onStopSpeaking && (
+              <button
+                type="button"
+                onClick={onStopSpeaking}
+                className="flex items-center gap-1 text-[11px] font-semibold text-purple-700 dark:text-purple-300 hover:underline cursor-pointer"
+              >
+                <Square className="w-2.5 h-2.5 fill-current" /> Stop
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Input Container */}
         <div 
           className="flex items-end gap-2 p-2 rounded-2xl border transition-all duration-200"
@@ -218,9 +270,11 @@ export default function ChatInput({ onSendMessage, isLoading, disabled = false }
             placeholder={
               isLoading 
                 ? "Analyzing with Gemini..." 
-                : attachedImage 
-                  ? "Describe the issue or press Enter to analyze screenshot..." 
-                  : "Type your message or paste screenshot (Ctrl+V)..."
+                : isListening
+                  ? "Listening to your voice..."
+                  : attachedImage 
+                    ? "Describe the issue or press Enter to analyze screenshot..." 
+                    : "Type your message, click mic to speak, or paste screenshot (Ctrl+V)..."
             }
             disabled={isLoading || disabled}
             rows={1}
@@ -232,6 +286,41 @@ export default function ChatInput({ onSendMessage, isLoading, disabled = false }
             }}
             aria-label="Message input"
           />
+
+          {/* Voice AI Mute / Unmute Button */}
+          {onToggleMute && (
+            <button
+              type="button"
+              onClick={onToggleMute}
+              className={`flex-shrink-0 p-2 rounded-xl transition-colors cursor-pointer ${
+                isMuted
+                  ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+              }`}
+              title={isMuted ? 'AI Voice readout muted (click to unmute)' : 'AI Voice readout active (click to mute)'}
+              aria-label="Toggle Voice Readout"
+            >
+              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+          )}
+
+          {/* Voice AI Microphone Button */}
+          {isVoiceSupported && onToggleListen && (
+            <button
+              type="button"
+              onClick={onToggleListen}
+              disabled={isLoading || disabled}
+              className={`flex-shrink-0 p-2 rounded-xl transition-all duration-200 cursor-pointer ${
+                isListening
+                  ? 'bg-red-500 text-white animate-pulse shadow-md ring-2 ring-red-300'
+                  : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50'
+              }`}
+              title={isListening ? 'Listening... click to stop' : 'Voice Mode: Click and speak'}
+              aria-label="Toggle Microphone"
+            >
+              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            </button>
+          )}
 
           {/* Send Button */}
           <button

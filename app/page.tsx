@@ -21,6 +21,7 @@ import TypingIndicator from '@/components/TypingIndicator';
 import RAGSettingsPanel, { useRAGSettings } from '@/components/RAGSettings';
 import { Message, MessageSource, MessageAttachment, RAGSettings, DocumentOption } from '@/types/chat';
 import { supabase } from '@/lib/supabase';
+import { useVoiceChat } from '@/hooks/useVoiceChat';
 
 // ============================================
 // Knowrex - Main Chat Page with RAG Integration
@@ -386,6 +387,12 @@ export default function ChatPage() {
   };
 
   // ============================================
+  // Voice AI Assistant hook & Speech Controls
+  // ============================================
+  const voiceChat = useVoiceChat();
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+
+  // ============================================
   // Send message to API and handle streaming response with RAG
   // ============================================
   const sendMessage = useCallback(async (content: string, image?: MessageAttachment) => {
@@ -588,6 +595,12 @@ export default function ChatPage() {
         }
       }
 
+      // Trigger Voice AI audio readout if not muted
+      const cleanVoiceText = accumulatedContent.replace(/__RAG_METADATA__.+?__END_METADATA__/, '').trim();
+      if (cleanVoiceText && !voiceChat.isMuted) {
+        voiceChat.speakText(cleanVoiceText);
+      }
+
     } catch (err) {
       // Handle errors gracefully
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
@@ -601,7 +614,27 @@ export default function ChatPage() {
       setIsLoading(false);
       setIsSearching(false);
     }
-  }, [messages, ragSettings]);
+  }, [messages, ragSettings, conversationId, voiceChat]);
+
+  // Voice Speech-to-Text Toggle Handler
+  const handleToggleVoice = useCallback(() => {
+    if (voiceChat.isListening) {
+      voiceChat.stopListening();
+    } else {
+      voiceChat.startListening(
+        (interim) => {
+          setVoiceTranscript(interim);
+        },
+        (finalText) => {
+          setVoiceTranscript(finalText);
+          if (finalText.trim()) {
+            sendMessage(finalText.trim());
+            setVoiceTranscript('');
+          }
+        }
+      );
+    }
+  }, [voiceChat, sendMessage]);
 
   // ============================================
   // Handle sample question click
@@ -913,6 +946,14 @@ export default function ChatPage() {
       <ChatInput 
         onSendMessage={sendMessage}
         isLoading={isLoading}
+        isListening={voiceChat.isListening}
+        isSpeaking={voiceChat.isSpeaking}
+        isVoiceSupported={voiceChat.isSupported}
+        isMuted={voiceChat.isMuted}
+        externalMessage={voiceTranscript}
+        onToggleListen={handleToggleVoice}
+        onToggleMute={voiceChat.toggleMute}
+        onStopSpeaking={voiceChat.stopSpeaking}
       />
 
       {/* ============================================

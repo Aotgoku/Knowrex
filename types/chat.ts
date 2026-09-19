@@ -70,6 +70,14 @@ export interface ChatInputProps {
   onSendMessage: (message: string, image?: MessageAttachment) => void;
   isLoading: boolean;
   disabled?: boolean;
+  isListening?: boolean;
+  isSpeaking?: boolean;
+  isVoiceSupported?: boolean;
+  isMuted?: boolean;
+  externalMessage?: string;
+  onToggleListen?: () => void;
+  onToggleMute?: () => void;
+  onStopSpeaking?: () => void;
 }
 
 /**
