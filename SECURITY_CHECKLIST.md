@@ -67,7 +67,7 @@ You should ONLY see:
 ### Step 3: Environment Variables for Vercel
 In Vercel dashboard, manually add:
 ```
-GEMINI_API_KEY=AIzaSyBO6wlIgkdtkrHIuNd0UxRbCzCowpLmFvs
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 **⚠️ NEVER commit this to git!**
 

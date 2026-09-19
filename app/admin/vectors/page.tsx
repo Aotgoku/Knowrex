@@ -1,21 +1,34 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Database, RefreshCw, Loader2, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Database, RefreshCw, Loader2, CheckCircle, XCircle, FileText, ShieldAlert, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import ChromaStats from '@/components/admin/ChromaStats';
 import SearchTester from '@/components/admin/SearchTester';
 import VectorSyncButton from '@/components/admin/VectorSyncButton';
 import { DocumentSummary } from '@/types/document';
+import { AuthUser } from '@/lib/auth';
 
 // ============================================
 // Vector Database Management Page
-// Manage local ChromaDB and test semantic search
+// Manage Pinecone Cloud Vector Index and test semantic search
 // ============================================
 
 export default function VectorDBPage() {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [statsKey, setStatsKey] = useState(0);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
+  // Load session
+  useEffect(() => {
+    fetch('/api/auth')
+      .then(r => r.json())
+      .then(d => {
+        if (d.authenticated && d.user) setCurrentUser(d.user);
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchDocuments = async () => {
     try {
@@ -49,6 +62,30 @@ export default function VectorDBPage() {
     fetchDocuments();
   };
 
+  // If Support Agent reaches this page, show access denied view
+  if (currentUser?.role === 'agent') {
+    return (
+      <div className="p-6 md:p-12 max-w-2xl mx-auto text-center">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center mx-auto mb-4">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2 text-foreground">
+          Super Admin Privileges Required
+        </h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          You are currently signed in as a Support Agent (Alex Rivera). Vector database wiping, synchronization, and index configuration are restricted to Super Admins to protect system knowledge integrity.
+        </p>
+        <Link
+          href="/admin/escalations"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm shadow-md hover:bg-indigo-700 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Return to Escalations Workspace
+        </Link>
+      </div>
+    );
+  }
+
   const syncedDocs = documents.filter(d => d.vectorSynced);
   const unsyncedDocs = documents.filter(d => d.status === 'complete' && !d.vectorSynced);
 
@@ -64,12 +101,12 @@ export default function VectorDBPage() {
           >
             Vector Database
           </h1>
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-600">
-            100% FREE · LOCAL
+          <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+            PINECONE SERVERLESS · CLOUD
           </span>
         </div>
         <p style={{ color: 'var(--muted)' }}>
-          Manage your local ChromaDB vector database and test semantic search
+          Manage your cloud Pinecone vector database and test semantic search
         </p>
       </div>
 

@@ -11,6 +11,10 @@ import {
   getEscalationStats
 } from '@/lib/escalationSystem';
 import {
+  createEscalationInDb,
+  listEscalationsFromDb
+} from '@/lib/escalationDb';
+import {
   CreateEscalationRequest,
   EscalationFilters,
   EscalationSortBy,
@@ -52,8 +56,11 @@ export async function GET(request: NextRequest) {
     // Check if stats requested
     const includeStats = searchParams.get('includeStats') === 'true';
 
-    // Get escalations
-    const result = await listEscalations(filters, sortBy, page, pageSize);
+    // Get escalations (Try Supabase first, fallback to local files)
+    let result = await listEscalationsFromDb(filters, sortBy, page, pageSize);
+    if (!result || result.escalations.length === 0) {
+      result = await listEscalations(filters, sortBy, page, pageSize);
+    }
 
     // Optionally include stats
     let stats = null;
@@ -100,22 +107,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the escalation
-    const escalation = await createEscalation({
-      userQuestion: body.userQuestion,
-      context: body.context || [],
-      attemptedAnswer: body.attemptedAnswer,
-      confidenceScore: body.confidenceScore,
-      documentsSearched: body.documentsSearched || 0,
-      topMatchScore: body.topMatchScore || 0,
-      sourcesFound: body.sourcesFound || [],
-      reason: body.reason || 'low_confidence',
-      urgency: body.urgency || 'medium',
-      category: body.category,
-      tags: body.tags || [],
-      conversationId: body.conversationId,
-      userId: body.userId
-    });
+    // Create escalation in Supabase (and local file fallback)
+    let escalation = await createEscalationInDb(body);
+    try {
+      await createEscalation(body);
+    } catch (e) {
+      console.warn('Local file fallback create escalation failed:', e);
+    }
 
     return NextResponse.json({
       success: true,

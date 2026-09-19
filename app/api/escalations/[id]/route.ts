@@ -16,6 +16,11 @@ import {
   rejectEscalation,
   addUserFeedback
 } from '@/lib/escalationSystem';
+import {
+  getEscalationFromDb,
+  updateEscalationInDb,
+  deleteEscalationFromDb
+} from '@/lib/escalationDb';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,7 +33,10 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    const escalation = await getEscalation(id);
+    let escalation = await getEscalationFromDb(id);
+    if (!escalation) {
+      escalation = await getEscalation(id);
+    }
 
     if (!escalation) {
       return NextResponse.json(
@@ -64,66 +72,98 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     switch (action) {
       case 'assign':
-        // Assign to an admin
         if (!data.assignedTo) {
           return NextResponse.json(
             { success: false, error: 'assignedTo is required' },
             { status: 400 }
           );
         }
-        result = await assignEscalation(id, { assignedTo: data.assignedTo });
+        result = await updateEscalationInDb(id, {
+          status: 'assigned',
+          assignedTo: data.assignedTo,
+          assignedAt: new Date()
+        });
+        if (!result) {
+          result = await assignEscalation(id, { assignedTo: data.assignedTo });
+        }
         break;
 
       case 'start':
-        // Mark as in progress
-        result = await startEscalation(id);
+        result = await updateEscalationInDb(id, { status: 'in_progress' });
+        if (!result) {
+          result = await startEscalation(id);
+        }
         break;
 
       case 'resolve':
-        // Resolve with human answer
         if (!data.humanAnswer || !data.resolvedBy) {
           return NextResponse.json(
             { success: false, error: 'humanAnswer and resolvedBy are required' },
             { status: 400 }
           );
         }
-        result = await resolveEscalation(id, {
+        result = await updateEscalationInDb(id, {
+          status: 'resolved',
           humanAnswer: data.humanAnswer,
           resolvedBy: data.resolvedBy,
-          resolutionNotes: data.resolutionNotes,
-          addToKB: data.addToKB || false,
-          kbIntegrationType: data.kbIntegrationType,
-          targetDocument: data.targetDocument,
-          category: data.category,
-          tags: data.tags
+          resolvedAt: new Date(),
+          addToKB: data.addToKB || false
         });
+        // Also keep local file updated if present
+        try {
+          await resolveEscalation(id, {
+            humanAnswer: data.humanAnswer,
+            resolvedBy: data.resolvedBy,
+            resolutionNotes: data.resolutionNotes,
+            addToKB: data.addToKB || false,
+            kbIntegrationType: data.kbIntegrationType,
+            targetDocument: data.targetDocument,
+            category: data.category,
+            tags: data.tags
+          });
+        } catch (e) {
+          console.warn('Local resolve fallback error:', e);
+        }
         break;
 
       case 'reject':
-        // Reject escalation
         if (!data.resolvedBy || !data.reason) {
           return NextResponse.json(
             { success: false, error: 'resolvedBy and reason are required' },
             { status: 400 }
           );
         }
-        result = await rejectEscalation(id, data.resolvedBy, data.reason);
+        result = await updateEscalationInDb(id, {
+          status: 'rejected',
+          resolvedBy: data.resolvedBy,
+          resolvedAt: new Date()
+        });
+        if (!result) {
+          result = await rejectEscalation(id, data.resolvedBy, data.reason);
+        }
         break;
 
       case 'feedback':
-        // Add user feedback
         if (data.satisfied === undefined) {
           return NextResponse.json(
             { success: false, error: 'satisfied is required' },
             { status: 400 }
           );
         }
-        result = await addUserFeedback(id, data.satisfied, data.feedback);
+        result = await updateEscalationInDb(id, {
+          userSatisfied: data.satisfied,
+          userFeedback: data.feedback
+        });
+        if (!result) {
+          result = await addUserFeedback(id, data.satisfied, data.feedback);
+        }
         break;
 
       default:
-        // Generic update
-        result = await updateEscalation(id, data);
+        result = await updateEscalationInDb(id, data);
+        if (!result) {
+          result = await updateEscalation(id, data);
+        }
     }
 
     if (!result) {
@@ -154,7 +194,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    const success = await deleteEscalation(id);
+    let success = await deleteEscalationFromDb(id);
+    if (!success) {
+      success = await deleteEscalation(id);
+    }
 
     if (!success) {
       return NextResponse.json(

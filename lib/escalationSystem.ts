@@ -161,9 +161,10 @@ export function shouldEscalate(
 
 /**
  * Check if confidence warrants showing escalation option
+ * In semantic search, 35%+ is a solid match. Only offer escalation if below MEDIUM or really low.
  */
 export function shouldOfferEscalation(confidenceScore: number): boolean {
-  return confidenceScore < CONFIDENCE_THRESHOLDS.HIGH;
+  return confidenceScore > 0 && confidenceScore < CONFIDENCE_THRESHOLDS.MEDIUM;
 }
 
 // ============================================

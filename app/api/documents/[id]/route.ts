@@ -8,6 +8,7 @@ import { loadDocument, deleteDocument as deleteDoc } from '@/lib/fileUtils';
 import { reprocessDocument } from '@/lib/documentProcessor';
 import { DocumentDetailResponse, DeleteResponse } from '@/types/document';
 import { deleteDocumentVectors } from '@/lib/vectorSearch';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -49,13 +50,25 @@ export async function GET(
 
 /**
  * DELETE /api/documents/[id]
- * Deletes a document and its associated files + vectors
+ * Deletes a document and its associated files + vectors (Admin Only)
  */
 export async function DELETE(
   request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse<DeleteResponse>> {
   try {
+    // RBAC: Verify user has admin privileges
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (user && user.role !== 'admin') {
+      return NextResponse.json({
+        success: false,
+        message: 'Permission denied: Only Super Admins can delete documents.',
+        error: 'Forbidden'
+      }, { status: 403 });
+    }
+
     const { id } = await params;
     
     // First, delete vectors from ChromaDB

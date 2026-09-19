@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   MessageSquare, 
   FileText, 
-  Settings, 
   Menu, 
   X,
   ChevronLeft,
@@ -15,12 +14,17 @@ import {
   Sun,
   Database,
   Users,
-  BarChart2
+  BarChart2,
+  Lock,
+  LogOut,
+  Shield,
+  Headphones
 } from 'lucide-react';
+import { AuthUser } from '@/lib/auth';
 
 // ============================================
 // AdminSidebar Component
-// Navigation sidebar for admin pages
+// Navigation sidebar for admin pages with RBAC awareness
 // ============================================
 
 interface NavItem {
@@ -28,22 +32,38 @@ interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
+  adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/documents', label: 'Documents', icon: FileText },
-  { href: '/admin/vectors', label: 'Vector DB', icon: Database, badge: 'FREE' },
-  { href: '/admin/escalations', label: 'Escalations', icon: Users, badge: 'NEW' },
+  { href: '/admin/vectors', label: 'Vector DB', icon: Database, badge: 'PINECONE', adminOnly: true },
+  { href: '/admin/escalations', label: 'Escalations', icon: Users, badge: 'LIVE' },
   { href: '/admin/escalations/analytics', label: 'Analytics', icon: BarChart2 },
-  { href: '/', label: 'Chat', icon: MessageSquare },
+  { href: '/', label: 'Customer Chat', icon: MessageSquare },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  // Fetch current session
+  useEffect(() => {
+    fetch('/api/auth')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+        }
+      })
+      .catch(err => console.error('Failed to load user session:', err));
+  }, [pathname]);
   
   // Check dark mode on mount and sync with system preference
   useEffect(() => {
@@ -70,37 +90,71 @@ export default function AdminSidebar() {
       document.documentElement.classList.remove('dark');
     }
   };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await fetch('/api/auth', { method: 'DELETE' });
+      router.push('/admin/login');
+      router.refresh();
+    } catch (err) {
+      console.error('Logout failed:', err);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
   
   const isActive = (href: string) => {
-    // Exact match for root paths
     if (href === '/admin' || href === '/') {
       return pathname === href;
     }
-    // For nested routes like /admin/documents, check if pathname starts with href
     return pathname === href || pathname.startsWith(href + '/');
   };
+
+  const isAgent = currentUser?.role === 'agent';
   
   const SidebarContent = () => (
     <>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: 'var(--border-color)' }}>
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shrink-0">
           <FileText className="w-6 h-6 text-white" />
         </div>
         {!isCollapsed && (
-          <div>
-            <h1 className="font-bold text-lg" style={{ color: 'var(--foreground)' }}>Knowrex</h1>
-            <p className="text-xs" style={{ color: 'var(--muted)' }}>Admin Panel</p>
+          <div className="overflow-hidden">
+            <h1 className="font-bold text-lg leading-tight" style={{ color: 'var(--foreground)' }}>Knowrex</h1>
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>Operations Portal</p>
           </div>
         )}
       </div>
       
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
+          const isRestrictedForAgent = isAgent && item.adminOnly;
           
+          if (isRestrictedForAgent) {
+            return (
+              <div
+                key={item.href}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg opacity-40 cursor-not-allowed select-none"
+                title="Restricted: Super Admin permission required"
+              >
+                <Lock className={`w-5 h-5 ${isCollapsed ? 'mx-auto' : ''}`} />
+                {!isCollapsed && (
+                  <span className="font-medium flex-1 text-sm">{item.label}</span>
+                )}
+                {!isCollapsed && (
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/10 text-amber-600 uppercase">
+                    Admin Only
+                  </span>
+                )}
+              </div>
+            );
+          }
+
           return (
             <Link
               key={item.href}
@@ -108,17 +162,17 @@ export default function AdminSidebar() {
               onClick={() => setIsMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                 active 
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
+                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-semibold shadow-xs' 
                   : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
               }`}
               style={!active ? { color: 'var(--foreground)' } : {}}
             >
-              <Icon className={`w-5 h-5 ${isCollapsed ? 'mx-auto' : ''}`} />
+              <Icon className={`w-5 h-5 shrink-0 ${isCollapsed ? 'mx-auto' : ''}`} />
               {!isCollapsed && (
-                <span className="font-medium flex-1">{item.label}</span>
+                <span className="font-medium flex-1 text-sm truncate">{item.label}</span>
               )}
               {!isCollapsed && item.badge && (
-                <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-green-500/10 text-green-600">
+                <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                   {item.badge}
                 </span>
               )}
@@ -126,30 +180,78 @@ export default function AdminSidebar() {
           );
         })}
       </nav>
+
+      {/* User Profile Card (RBAC Badge) */}
+      {currentUser && (
+        <div className="p-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
+          <div className={`p-2.5 rounded-xl border flex items-center gap-3 ${
+            currentUser.role === 'admin'
+              ? 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50'
+              : 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50'
+          }`}>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm ${
+              currentUser.role === 'admin' 
+                ? 'bg-indigo-600 text-white' 
+                : 'bg-emerald-600 text-white'
+            }`}>
+              {currentUser.role === 'admin' ? <Shield className="w-4 h-4" /> : <Headphones className="w-4 h-4" />}
+            </div>
+
+            {!isCollapsed && (
+              <div className="overflow-hidden flex-1">
+                <div className="font-semibold text-xs truncate" style={{ color: 'var(--foreground)' }}>
+                  {currentUser.name}
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider ${
+                    currentUser.role === 'admin'
+                      ? 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300'
+                      : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
+                  }`}>
+                    {currentUser.role === 'admin' ? 'Super Admin' : 'Support Agent'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       
       {/* Footer actions */}
       <div className="p-3 border-t space-y-1" style={{ borderColor: 'var(--border-color)' }}>
         {/* Dark mode toggle */}
         <button
           onClick={toggleDarkMode}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 btn-press"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer text-sm"
           style={{ color: 'var(--foreground)' }}
         >
           {isDarkMode ? (
-            <Sun className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'mx-auto' : ''}`} style={{ transform: isDarkMode ? 'rotate(0deg)' : 'rotate(-90deg)' }} />
+            <Sun className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'mx-auto' : ''}`} />
           ) : (
-            <Moon className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'mx-auto' : ''}`} style={{ transform: !isDarkMode ? 'rotate(0deg)' : 'rotate(90deg)' }} />
+            <Moon className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'mx-auto' : ''}`} />
           )}
-          {!isCollapsed && <span className="font-medium">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>}
+          {!isCollapsed && <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>}
         </button>
+
+        {/* Logout Button */}
+        {currentUser && (
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 cursor-pointer text-sm"
+          >
+            <LogOut className={`w-4 h-4 ${isCollapsed ? 'mx-auto' : ''}`} />
+            {!isCollapsed && <span>{loggingOut ? 'Signing out...' : 'Sign Out'}</span>}
+          </button>
+        )}
         
         {/* Collapse button - desktop only */}
         <button
           onClick={() => setIsCollapsed(prev => !prev)}
-          className="hidden md:flex w-full items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+          className="hidden md:flex w-full items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer text-sm"
           style={{ color: 'var(--muted)' }}
         >
-          <ChevronLeft className={`w-5 h-5 transition-transform ${isCollapsed ? 'rotate-180 mx-auto' : ''}`} />
+          <ChevronLeft className={`w-4 h-4 transition-transform ${isCollapsed ? 'rotate-180 mx-auto' : ''}`} />
           {!isCollapsed && <span>Collapse</span>}
         </button>
       </div>

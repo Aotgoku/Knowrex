@@ -1,27 +1,16 @@
 // ============================================
-// Simple File-Based Vector Store
-// 100% FREE local vector database
-// Storage: /data/chroma/vectors.json
+// Pinecone Cloud Vector Store
+// Production-grade Serverless Vector Database
+// Connected to: knowrex-index (384 dimensions, cosine)
 // ============================================
 
-import { promises as fs } from 'fs';
-import path from 'path';
+import { Pinecone } from '@pinecone-database/pinecone';
 
 // Storage configuration
 export const VECTOR_CONFIG = {
-  collectionName: 'knowrex-documents',
-  storageFile: path.join(process.cwd(), 'data', 'chroma', 'vectors.json'),
+  collectionName: process.env.PINECONE_INDEX_NAME || 'knowrex-index',
   distanceMetric: 'cosine' as const,
 };
-
-// ============================================
-// IN-MEMORY CACHE
-// The vectors.json is ~136MB - reading it from
-// disk on every query is extremely slow.
-// Cache it in memory after first load.
-// ============================================
-let vectorCache: VectorDatabase | null = null;
-let cacheLoadPromise: Promise<VectorDatabase> | null = null;
 
 /**
  * Vector metadata structure
@@ -32,110 +21,32 @@ export interface VectorMetadata {
   text: string;
   chunkIndex: number;
   charCount: number;
+  [key: string]: any;
 }
 
-/**
- * Stored vector structure
- */
-interface StoredVector {
-  id: string;
-  embedding: number[];
-  metadata: VectorMetadata;
-}
+// Cached Pinecone client instance
+let pineconeClient: Pinecone | null = null;
 
 /**
- * Vector database structure
+ * Get or initialize the Pinecone index client
  */
-interface VectorDatabase {
-  vectors: StoredVector[];
-  version: number;
-}
-
-/**
- * Ensure storage directory exists
- */
-async function ensureStorageDirectory(): Promise<void> {
-  const dir = path.dirname(VECTOR_CONFIG.storageFile);
-  await fs.mkdir(dir, { recursive: true });
-}
-
-/**
- * Load vectors from file (with in-memory cache)
- * The 136MB file is only read from disk ONCE per server session.
- */
-async function loadVectors(): Promise<VectorDatabase> {
-  // Return from cache if already loaded
-  if (vectorCache) {
-    return vectorCache;
+export function getPineconeIndex() {
+  const apiKey = process.env.PINECONE_API_KEY;
+  if (!apiKey) {
+    throw new Error('[Pinecone] Missing PINECONE_API_KEY environment variable. Please check .env.local');
   }
 
-  // If a load is already in progress, wait for it
-  if (cacheLoadPromise) {
-    return cacheLoadPromise;
+  if (!pineconeClient) {
+    pineconeClient = new Pinecone({ apiKey });
   }
 
-  // Start loading from disk
-  cacheLoadPromise = (async () => {
-    try {
-      await ensureStorageDirectory();
-      console.log('[VectorStore] Loading vectors from disk (first time)...');
-      const data = await fs.readFile(VECTOR_CONFIG.storageFile, 'utf-8');
-      const db = JSON.parse(data) as VectorDatabase;
-      vectorCache = db;
-      console.log(`[VectorStore] Loaded ${db.vectors.length} vectors into memory cache`);
-      return db;
-    } catch (error) {
-      // File doesn't exist or is empty, return empty database
-      cacheLoadPromise = null;
-      vectorCache = { vectors: [], version: 1 };
-      return vectorCache;
-    }
-  })();
-
-  return cacheLoadPromise;
+  const indexName = VECTOR_CONFIG.collectionName;
+  return pineconeClient.index(indexName);
 }
 
 /**
- * Save vectors to file and update memory cache
- */
-async function saveVectors(db: VectorDatabase): Promise<void> {
-  // Update cache immediately
-  vectorCache = db;
-  cacheLoadPromise = null;
-  await ensureStorageDirectory();
-  await fs.writeFile(VECTOR_CONFIG.storageFile, JSON.stringify(db), 'utf-8');
-}
-
-/**
- * Calculate cosine similarity between two vectors
- */
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) {
-    throw new Error('Vectors must have the same length');
-  }
-  
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-  
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  
-  normA = Math.sqrt(normA);
-  normB = Math.sqrt(normB);
-  
-  if (normA === 0 || normB === 0) {
-    return 0;
-  }
-  
-  return dotProduct / (normA * normB);
-}
-
-/**
- * Add vectors to the collection
+ * Add / Upsert vectors to Pinecone
+ * Automatically handles batching (100 vectors per request)
  */
 export async function addVectors(
   vectors: Array<{
@@ -147,30 +58,44 @@ export async function addVectors(
   if (vectors.length === 0) {
     return { success: true, count: 0 };
   }
-  
+
   try {
-    const db = await loadVectors();
-    
-    // Remove existing vectors with same IDs (upsert behavior)
-    const newVectorIds = new Set(vectors.map(v => v.id));
-    db.vectors = db.vectors.filter(v => !newVectorIds.has(v.id));
-    
-    // Add new vectors
-    db.vectors.push(...vectors);
-    
-    await saveVectors(db);
-    
-    console.log(`[VectorStore] Upserted ${vectors.length} vectors`);
+    const index = getPineconeIndex();
+    const batchSize = 100;
+
+    console.log(`[Pinecone] Upserting ${vectors.length} vectors to cloud index...`);
+
+    for (let i = 0; i < vectors.length; i += batchSize) {
+      const batch = vectors.slice(i, i + batchSize);
+      const records = batch.map(v => ({
+        id: v.id,
+        values: v.embedding,
+        metadata: {
+          documentId: String(v.metadata.documentId || ''),
+          documentName: String(v.metadata.documentName || ''),
+          text: String(v.metadata.text || ''),
+          chunkIndex: Number(v.metadata.chunkIndex ?? 0),
+          charCount: Number(v.metadata.charCount ?? 0),
+          ...(v.metadata.faqId ? { faqId: String(v.metadata.faqId) } : {}),
+          ...(v.metadata.type ? { type: String(v.metadata.type) } : {}),
+          ...(v.metadata.category ? { category: String(v.metadata.category) } : {})
+        }
+      }));
+
+      await index.upsert({ records });
+    }
+
+    console.log(`[Pinecone] Successfully upserted ${vectors.length} vectors.`);
     return { success: true, count: vectors.length };
-    
+
   } catch (error) {
-    console.error('[VectorStore] Failed to add vectors:', error);
+    console.error('[Pinecone] Failed to add vectors:', error);
     throw error;
   }
 }
 
 /**
- * Query vectors by similarity
+ * Query vectors by semantic similarity
  */
 export async function queryVectors(
   queryEmbedding: number[],
@@ -183,29 +108,40 @@ export async function queryVectors(
   text: string;
 }>> {
   try {
-    const db = await loadVectors();
-    
-    // Filter vectors if needed
-    let vectors = db.vectors;
-    if (filter?.documentId) {
-      vectors = vectors.filter(v => v.metadata.documentId === filter.documentId);
-    }
-    
-    // Calculate similarity scores
-    const results = vectors.map(v => ({
-      id: v.id,
-      score: cosineSimilarity(queryEmbedding, v.embedding),
-      metadata: v.metadata,
-      text: v.metadata.text,
-    }));
-    
-    // Sort by score (highest first) and take top K
-    results.sort((a, b) => b.score - a.score);
-    
-    return results.slice(0, topK);
-    
+    const index = getPineconeIndex();
+
+    const queryFilter = filter?.documentId
+      ? { documentId: { $eq: filter.documentId } }
+      : undefined;
+
+    const response = await index.query({
+      vector: queryEmbedding,
+      topK,
+      includeMetadata: true,
+      filter: queryFilter
+    });
+
+    const matches = response.matches || [];
+
+    return matches.map(m => {
+      const meta = m.metadata as Record<string, any> || {};
+      const text = String(meta.text || '');
+      return {
+        id: m.id,
+        score: m.score || 0,
+        metadata: {
+          documentId: String(meta.documentId || ''),
+          documentName: String(meta.documentName || ''),
+          text,
+          chunkIndex: Number(meta.chunkIndex ?? 0),
+          charCount: Number(meta.charCount ?? text.length),
+        },
+        text
+      };
+    });
+
   } catch (error) {
-    console.error('[VectorStore] Query failed:', error);
+    console.error('[Pinecone] Query failed:', error);
     throw error;
   }
 }
@@ -215,42 +151,51 @@ export async function queryVectors(
  */
 export async function deleteVectorsByDocument(documentId: string): Promise<{ success: boolean; deleted: number }> {
   try {
-    const db = await loadVectors();
-    
-    const initialCount = db.vectors.length;
-    db.vectors = db.vectors.filter(v => v.metadata.documentId !== documentId);
-    const deleted = initialCount - db.vectors.length;
-    
-    if (deleted > 0) {
-      await saveVectors(db);
-      console.log(`[VectorStore] Deleted ${deleted} vectors for document ${documentId}`);
-    }
-    
-    return { success: true, deleted };
-    
+    const index = getPineconeIndex();
+    await index.deleteMany({
+      filter: {
+        documentId: { $eq: documentId }
+      }
+    });
+    console.log(`[Pinecone] Deleted vectors for document ${documentId}`);
+    return { success: true, deleted: 1 };
   } catch (error) {
-    console.error('[VectorStore] Delete failed:', error);
-    throw error;
+    console.error('[Pinecone] Delete failed:', error);
+    return { success: false, deleted: 0 };
   }
 }
 
 /**
- * Get collection statistics
+ * Delete a single vector by its ID
+ */
+export async function deleteVectorById(id: string): Promise<boolean> {
+  try {
+    const index = getPineconeIndex();
+    await index.deleteOne({ id });
+    console.log(`[Pinecone] Deleted vector ${id}`);
+    return true;
+  } catch (error) {
+    console.error(`[Pinecone] Failed to delete vector ${id}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Get collection / index statistics
  */
 export async function getCollectionStats(): Promise<{
   totalVectors: number;
   collectionName: string;
 }> {
   try {
-    const db = await loadVectors();
-    
+    const index = getPineconeIndex();
+    const stats = await index.describeIndexStats();
     return {
-      totalVectors: db.vectors.length,
+      totalVectors: stats.totalRecordCount || 0,
       collectionName: VECTOR_CONFIG.collectionName,
     };
-    
   } catch (error) {
-    console.error('[VectorStore] Failed to get stats:', error);
+    console.error('[Pinecone] Failed to get stats:', error);
     return {
       totalVectors: 0,
       collectionName: VECTOR_CONFIG.collectionName,
@@ -259,18 +204,16 @@ export async function getCollectionStats(): Promise<{
 }
 
 /**
- * Reset the collection (delete all vectors)
+ * Reset the collection (delete all vectors from Pinecone)
  */
 export async function resetCollection(): Promise<{ success: boolean; message: string }> {
   try {
-    const db: VectorDatabase = { vectors: [], version: 1 };
-    await saveVectors(db);
-    
-    console.log('[VectorStore] Collection reset');
-    return { success: true, message: 'Collection reset successfully' };
-    
+    const index = getPineconeIndex();
+    await index.deleteAll();
+    console.log('[Pinecone] Index cleared successfully');
+    return { success: true, message: 'Pinecone index reset successfully' };
   } catch (error) {
-    console.error('[VectorStore] Reset failed:', error);
+    console.error('[Pinecone] Reset failed:', error);
     throw error;
   }
 }
@@ -279,12 +222,7 @@ export async function resetCollection(): Promise<{ success: boolean; message: st
  * Check if storage is available
  */
 export async function isStorageAvailable(): Promise<boolean> {
-  try {
-    await ensureStorageDirectory();
-    return true;
-  } catch {
-    return false;
-  }
+  return !!process.env.PINECONE_API_KEY;
 }
 
 /**
@@ -292,29 +230,29 @@ export async function isStorageAvailable(): Promise<boolean> {
  */
 export async function getDocumentVectorCount(documentId: string): Promise<number> {
   try {
-    const db = await loadVectors();
-    return db.vectors.filter(v => v.metadata.documentId === documentId).length;
+    const index = getPineconeIndex();
+    const res = await index.query({
+      vector: new Array(384).fill(0),
+      topK: 1,
+      filter: { documentId: { $eq: documentId } }
+    });
+    return (res.matches && res.matches.length > 0) ? 1 : 0;
   } catch {
     return 0;
   }
 }
 
 /**
- * Get or create collection (compatibility with chromadb.ts interface)
+ * Compatibility helpers
  */
 export async function getCollection() {
-  await ensureStorageDirectory();
   return {
     name: VECTOR_CONFIG.collectionName,
     metadata: { 'hnsw:space': VECTOR_CONFIG.distanceMetric }
   };
 }
 
-/**
- * Get client (compatibility with chromadb.ts interface)
- */
 export async function getChromaClient() {
-  await ensureStorageDirectory();
-  console.log('[VectorStore] File-based vector storage initialized');
+  console.log('[Pinecone] Cloud vector storage initialized');
   return {};
 }

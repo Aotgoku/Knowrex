@@ -19,7 +19,8 @@ import ChatMessage from '@/components/ChatMessage';
 import ChatInput from '@/components/ChatInput';
 import TypingIndicator from '@/components/TypingIndicator';
 import RAGSettingsPanel, { useRAGSettings } from '@/components/RAGSettings';
-import { Message, MessageSource, RAGSettings, DocumentOption } from '@/types/chat';
+import { Message, MessageSource, MessageAttachment, RAGSettings, DocumentOption } from '@/types/chat';
+import { supabase } from '@/lib/supabase';
 
 // ============================================
 // Knowrex - Main Chat Page with RAG Integration
@@ -86,6 +87,7 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [documentsCount, setDocumentsCount] = useState(0);
   const [documents, setDocuments] = useState<DocumentOption[]>([]);
   const [pendingEscalations, setPendingEscalations] = useState<Set<string>>(new Set());
@@ -96,74 +98,89 @@ export default function ChatPage() {
   // Ref for auto-scrolling to the latest message
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const isInitialMountRef = useRef<boolean>(true);
 
   // ============================================
   // Load messages from localStorage on mount
   // ============================================
   useEffect(() => {
-    // Check for saved dark mode preference
-    const savedDarkMode = localStorage.getItem('knowrex-dark-mode');
-    if (savedDarkMode === 'true') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
+    const initApp = async () => {
+      // 1. Check for saved dark mode preference
+      const savedDarkMode = localStorage.getItem('knowrex-dark-mode');
+      if (savedDarkMode === 'true') {
+        setIsDarkMode(true);
+        document.documentElement.classList.add('dark');
+      }
 
-    // Load chat history from localStorage
-    const loadMessages = async () => {
+      // 2. Load or initialize conversation session
       try {
+        let currentConvId = localStorage.getItem('knowrex-conversation-id');
+        
+        // If we have a saved conversation ID, attempt to fetch messages from Supabase
+        if (currentConvId) {
+          setConversationId(currentConvId);
+          try {
+            const res = await fetch(`/api/conversations?id=${currentConvId}`);
+            const data = await res.json();
+            if (data.success && data.messages && data.messages.length > 0) {
+              const dbMessages: Message[] = data.messages.map((m: any) => ({
+                id: m.id,
+                role: m.role,
+                content: m.content,
+                timestamp: new Date(m.created_at),
+                sources: m.sources,
+                confidence: m.confidence,
+                usedRAG: m.used_rag,
+                escalationId: m.escalation_id
+              }));
+              setMessages(dbMessages);
+              setIsInitialized(true);
+              fetchDocumentsCount();
+              return;
+            }
+          } catch (fetchErr) {
+            console.warn('Could not fetch from Supabase, falling back to localStorage:', fetchErr);
+          }
+        } else {
+          // Create new conversation in Supabase
+          try {
+            const createRes = await fetch('/api/conversations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'create', title: 'Support Chat' })
+            });
+            const createData = await createRes.json();
+            if (createData.success && createData.conversation?.id) {
+              currentConvId = createData.conversation.id;
+              setConversationId(currentConvId);
+              localStorage.setItem('knowrex-conversation-id', currentConvId!);
+            }
+          } catch (createErr) {
+            console.warn('Could not create Supabase conversation:', createErr);
+          }
+        }
+
+        // Fallback: Load chat history from localStorage
         const savedMessages = localStorage.getItem(STORAGE_KEY);
         if (savedMessages) {
           const parsedMessages = JSON.parse(savedMessages);
-          // Restore dates from strings
           const restoredMessages = parsedMessages.map((msg: Message) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
           }));
           
-          // Check for unresolved escalations and load resolved ones
           const pendingEscIds = new Set<string>();
           const messagesToAdd: Message[] = [];
-          const humanResponseIds = new Set<string>(); // Track human responses already added
           
           for (const msg of restoredMessages) {
-            // Skip if this is a human response that we'll re-fetch
             if (msg.id?.startsWith('human-')) {
-              humanResponseIds.add(msg.id);
-              continue; // We'll add fresh version from API
+              continue;
             }
-            
             messagesToAdd.push(msg);
-            
-            // If this message has an escalation ID, check its status
             if (msg.escalationId) {
-              try {
-                const response = await fetch(`/api/escalations/${msg.escalationId}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                  if (data.escalation.status === 'resolved' && data.escalation.humanAnswer) {
-                    // Add human response - always add fresh from API
-                    const humanMsgId = `human-${msg.escalationId}`;
-                    messagesToAdd.push({
-                      id: humanMsgId,
-                      role: 'assistant',
-                      content: `**🙋 Human Expert Response:**\n\n${data.escalation.humanAnswer}\n\n*Resolved by: ${data.escalation.resolvedBy}*`,
-                      timestamp: new Date(data.escalation.resolvedAt),
-                      usedRAG: false
-                    });
-                  } else if (data.escalation.status !== 'resolved' && data.escalation.status !== 'rejected') {
-                    // Still pending/in_progress, add to polling set
-                    pendingEscIds.add(msg.escalationId);
-                  }
-                }
-              } catch (error) {
-                console.error(`Error checking escalation ${msg.escalationId}:`, error);
-                // Add to pending in case of error to retry
-                pendingEscIds.add(msg.escalationId);
-              }
+              pendingEscIds.add(msg.escalationId);
             }
           }
-          
           setMessages(messagesToAdd.length > 0 ? messagesToAdd : [WELCOME_MESSAGE]);
           setPendingEscalations(pendingEscIds);
         } else {
@@ -172,15 +189,15 @@ export default function ChatPage() {
       } catch (e) {
         console.error('Failed to load chat history:', e);
         setMessages([WELCOME_MESSAGE]);
+      } finally {
+        setIsInitialized(true);
       }
+
+      // 3. Fetch documents count for RAG indicator
+      fetchDocumentsCount();
     };
     
-    loadMessages();
-    
-    // Fetch documents count for RAG indicator
-    fetchDocumentsCount();
-    
-    setIsInitialized(true);
+    initApp();
   }, []);
   
   // Fetch documents count
@@ -191,8 +208,6 @@ export default function ChatPage() {
         const data = await response.json();
         const docsList = data.documents || [];
         setDocumentsCount(docsList.length);
-        // Build DocumentOption list for the filter dropdown
-        // Use originalName from the API (not 'name' which doesn't exist)
         setDocuments(docsList.map((doc: { id: string; originalName?: string; filename?: string }) => ({
           id: doc.id,
           name: doc.originalName || doc.filename || 'Unnamed Document'
@@ -217,57 +232,102 @@ export default function ChatPage() {
   }, [messages, isInitialized]);
 
   // ============================================
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom cleanly
   // ============================================
   useEffect(() => {
-    if (messagesEndRef.current) {
+    if (!isInitialized || !messagesEndRef.current) return;
+
+    if (isInitialMountRef.current) {
+      // First load: jump straight to bottom without stutter
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+      isInitialMountRef.current = false;
+    } else {
+      // New messages: smooth scroll
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isInitialized]);
 
   // ============================================
-  // Poll for resolved escalations
+  // Supabase Realtime: Instant Human Resolution Delivery
+  // Listens via WebSockets (postgres_changes) + gentle fallback
   // ============================================
   useEffect(() => {
     if (pendingEscalations.size === 0) return;
 
+    const deliverResolution = (
+      escalationId: string, 
+      humanAnswer: string, 
+      resolvedBy?: string, 
+      resolvedAt?: string | Date
+    ) => {
+      setPendingEscalations(prev => {
+        const next = new Set(prev);
+        next.delete(escalationId);
+        return next;
+      });
+
+      setMessages(prev => {
+        const humanResponseExists = prev.some(
+          m => m.id === `human-${escalationId}`
+        );
+        if (humanResponseExists) return prev;
+
+        const humanMessage: Message = {
+          id: `human-${escalationId}`,
+          role: 'assistant',
+          content: `**🙋 Human Expert Response:**\n\n${humanAnswer}\n\n*Resolved by: ${resolvedBy || 'Support Specialist'}*`,
+          timestamp: resolvedAt ? new Date(resolvedAt) : new Date(),
+          usedRAG: false
+        };
+
+        return [...prev, humanMessage];
+      });
+    };
+
+    // 1. Live WebSocket Listener via Supabase Realtime Channel
+    const channel = supabase
+      .channel('customer-escalation-live')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'escalations'
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          if (
+            updated &&
+            pendingEscalations.has(updated.id) &&
+            updated.status === 'resolved' &&
+            updated.human_answer
+          ) {
+            console.log('[Realtime] ⚡ Received live human resolution via WebSocket:', updated.id);
+            deliverResolution(
+              updated.id,
+              updated.human_answer,
+              updated.resolved_by,
+              updated.resolved_at
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    // 2. Light safety check (in case WebSocket reconnected during network change)
     const checkEscalations = async () => {
       const escalationsToCheck = Array.from(pendingEscalations);
-      
       for (const escalationId of escalationsToCheck) {
         try {
           const response = await fetch(`/api/escalations/${escalationId}`);
           const data = await response.json();
-          
           if (data.success && data.escalation.status === 'resolved' && data.escalation.humanAnswer) {
-            // Remove from pending first
-            setPendingEscalations(prev => {
-              const next = new Set(prev);
-              next.delete(escalationId);
-              return next;
-            });
-            
-            // Add human answer as new message (use functional update to get latest messages)
-            setMessages(prev => {
-              // Check if human response already exists
-              const humanResponseExists = prev.some(
-                m => m.id === `human-${escalationId}`
-              );
-              
-              if (humanResponseExists) {
-                return prev; // Don't add duplicate
-              }
-              
-              const humanMessage: Message = {
-                id: `human-${escalationId}`,
-                role: 'assistant',
-                content: `**🙋 Human Expert Response:**\n\n${data.escalation.humanAnswer}\n\n*Resolved by: ${data.escalation.resolvedBy}*`,
-                timestamp: new Date(data.escalation.resolvedAt),
-                usedRAG: false
-              };
-              
-              return [...prev, humanMessage];
-            });
+            deliverResolution(
+              escalationId,
+              data.escalation.humanAnswer,
+              data.escalation.resolvedBy,
+              data.escalation.resolvedAt
+            );
           }
         } catch (error) {
           console.error(`Error checking escalation ${escalationId}:`, error);
@@ -275,12 +335,14 @@ export default function ChatPage() {
       }
     };
 
-    // Poll every 5 seconds
-    const interval = setInterval(checkEscalations, 5000);
-    // Check immediately
+    // Initial check on mount + 15s gentle fallback interval (reduced from aggressive 5s)
     checkEscalations();
+    const interval = setInterval(checkEscalations, 15000);
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [pendingEscalations]);
 
   // ============================================
@@ -289,7 +351,7 @@ export default function ChatPage() {
   const toggleDarkMode = () => {
     setIsDarkMode(prev => {
       const newValue = !prev;
-      localStorage.setItem('bizassist-dark-mode', String(newValue));
+      localStorage.setItem('knowrex-dark-mode', String(newValue));
       if (newValue) {
         document.documentElement.classList.add('dark');
       } else {
@@ -300,18 +362,33 @@ export default function ChatPage() {
   };
 
   // ============================================
-  // Clear chat history
+  // Clear chat history & start fresh conversation
   // ============================================
-  const clearChat = () => {
+  const clearChat = async () => {
     setMessages([WELCOME_MESSAGE]);
     setError(null);
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('knowrex-conversation-id');
+    try {
+      const createRes = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', title: 'New Support Chat' })
+      });
+      const createData = await createRes.json();
+      if (createData.success && createData.conversation?.id) {
+        setConversationId(createData.conversation.id);
+        localStorage.setItem('knowrex-conversation-id', createData.conversation.id);
+      }
+    } catch (err) {
+      console.warn('Could not reset Supabase conversation on clear:', err);
+    }
   };
 
   // ============================================
   // Send message to API and handle streaming response with RAG
   // ============================================
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, image?: MessageAttachment) => {
     // Clear any previous errors
     setError(null);
 
@@ -320,7 +397,8 @@ export default function ChatPage() {
       id: `user-${Date.now()}`,
       role: 'user',
       content,
-      timestamp: new Date()
+      timestamp: new Date(),
+      image: image || undefined
     };
 
     // Add user message to state
@@ -350,6 +428,7 @@ export default function ChatPage() {
         },
         body: JSON.stringify({
           message: content,
+          image: image || undefined,
           history,
           ragEnabled: ragSettings.enabled,
           minConfidence: ragSettings.minConfidence,
@@ -468,6 +547,45 @@ export default function ChatPage() {
               }
             : msg
         ));
+      }
+
+      // Save user & assistant messages to Supabase in background
+      if (conversationId) {
+        try {
+          // Save user message
+          fetch('/api/conversations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'save_message',
+              conversationId,
+              message: userMessage
+            })
+          }).catch(console.error);
+
+          // Save assistant message
+          const finalAssistantMsg = {
+            id: assistantMessageId,
+            role: 'assistant',
+            content: accumulatedContent.replace(/__RAG_METADATA__.+?__END_METADATA__/, ''),
+            usedRAG: ragMetadata.usedRAG,
+            sources: ragMetadata.sources,
+            confidence: ragMetadata.confidence,
+            escalationId: undefined
+          };
+
+          fetch('/api/conversations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'save_message',
+              conversationId,
+              message: finalAssistantMsg
+            })
+          }).catch(console.error);
+        } catch (dbErr) {
+          console.warn('Failed to save to Supabase:', dbErr);
+        }
       }
 
     } catch (err) {

@@ -13,6 +13,8 @@ import {
   KBIntegrationType
 } from '@/types/escalation';
 import { updateEscalation, getKBPendingEscalations } from './escalationSystem';
+import { generateEmbedding } from './embeddings';
+import { addVectors, queryVectors, deleteVectorById } from './vectorStore';
 
 // Re-export FAQEntry type for use in RAG system
 export type { FAQEntry } from '@/types/escalation';
@@ -69,6 +71,13 @@ export async function createFAQFromEscalation(escalation: Escalation): Promise<F
 
   // Mark escalation as added to KB
   await updateEscalation(escalation.id, { addedToKB: true });
+
+  // ⚡ Knowledge Loop: Auto-vectorize FAQ into Pinecone
+  try {
+    await syncFAQToVectorDB(faq);
+  } catch (err) {
+    console.warn('[Knowledge Loop] Auto-vectorization to Pinecone had warning:', err);
+  }
 
   console.log(`✅ Created FAQ entry ${faq.id} from escalation ${escalation.id}`);
   return faq;
@@ -129,15 +138,58 @@ export async function updateFAQ(id: string, updates: Partial<FAQEntry>): Promise
   };
 
   await fs.writeFile(getFAQPath(id), JSON.stringify(updated, null, 2));
+
+  // Update in Pinecone
+  try {
+    await syncFAQToVectorDB(updated);
+  } catch (err) {
+    console.warn('[Knowledge Loop] Pinecone update warning:', err);
+  }
+
   return updated;
 }
 
 /**
- * Delete FAQ entry
+ * Sync an FAQ entry directly into Pinecone Cloud Vector Index
+ */
+export async function syncFAQToVectorDB(faq: FAQEntry): Promise<boolean> {
+  try {
+    const textToEmbed = `Question: ${faq.question}\n\nAnswer: ${faq.answer}`;
+    const embedding = await generateEmbedding(textToEmbed);
+
+    await addVectors([{
+      id: `faq_${faq.id}`,
+      embedding,
+      metadata: {
+        documentId: 'knowledge_loop_faq',
+        documentName: `FAQ: ${faq.category || 'General'}`,
+        text: `**Question:** ${faq.question}\n\n**Answer:** ${faq.answer}`,
+        chunkIndex: 0,
+        charCount: textToEmbed.length,
+        faqId: faq.id,
+        type: 'faq',
+        category: faq.category || 'General'
+      }
+    }]);
+
+    console.log(`[Knowledge Loop] ⚡ Successfully vectorized FAQ into Pinecone: ${faq.id}`);
+    return true;
+  } catch (error) {
+    console.error(`[Knowledge Loop] Failed to vectorize FAQ ${faq.id}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Delete FAQ entry (removes from disk and Pinecone)
  */
 export async function deleteFAQ(id: string): Promise<boolean> {
   try {
     await fs.unlink(getFAQPath(id));
+    // Remove from Pinecone vector index
+    await deleteVectorById(`faq_${id}`).catch(err => {
+      console.warn('[Knowledge Loop] Pinecone delete vector warning:', err);
+    });
     return true;
   } catch {
     return false;
@@ -145,17 +197,78 @@ export async function deleteFAQ(id: string): Promise<boolean> {
 }
 
 /**
- * Search FAQs
+ * Search FAQs using Semantic Pinecone Vector Search with Keyword Fallback
  */
 export async function searchFAQs(query: string): Promise<FAQEntry[]> {
+  const cleanQuery = query.trim();
+  if (!cleanQuery) return [];
+
+  // 1. Semantic Search via Pinecone Cloud
+  try {
+    const queryEmbedding = await generateEmbedding(cleanQuery);
+    const vectorMatches = await queryVectors(queryEmbedding, 5, {
+      documentId: 'knowledge_loop_faq'
+    });
+
+    // If matches found with reasonable confidence score
+    if (vectorMatches.length > 0 && vectorMatches[0].score >= 0.35) {
+      console.log(`[Knowledge Loop] 🧠 Pinecone semantic match found: ${vectorMatches.length} FAQs (top match: ${(vectorMatches[0].score * 100).toFixed(1)}%)`);
+
+      const allFaqs = await getAllFAQs();
+      const faqMap = new Map(allFaqs.map(f => [f.id, f]));
+
+      const semanticResults: FAQEntry[] = [];
+      for (const match of vectorMatches) {
+        const faqId = (match.metadata as any).faqId;
+        const found = faqMap.get(faqId);
+        if (found) {
+          semanticResults.push(found);
+        } else {
+          // Reconstruct from Pinecone metadata if physical file is missing
+          const parts = match.text.split('**Answer:**');
+          semanticResults.push({
+            id: faqId || match.id,
+            question: parts[0]?.replace('**Question:**', '').trim() || cleanQuery,
+            answer: parts[1]?.trim() || match.text,
+            category: (match.metadata as any).category || 'General',
+            tags: [],
+            sourceEscalationId: faqId || match.id,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+      }
+
+      if (semanticResults.length > 0) {
+        return semanticResults;
+      }
+    }
+  } catch (error) {
+    console.warn('[Knowledge Loop] Pinecone FAQ search error, falling back to substring:', error);
+  }
+
+  // 2. Keyword Substring Fallback
   const faqs = await getAllFAQs();
-  const lowerQuery = query.toLowerCase();
+  const lowerQuery = cleanQuery.toLowerCase();
 
   return faqs.filter(faq =>
     faq.question.toLowerCase().includes(lowerQuery) ||
     faq.answer.toLowerCase().includes(lowerQuery) ||
     faq.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
   );
+}
+
+/**
+ * Batch sync all existing FAQs to Pinecone
+ */
+export async function syncAllFAQsToVectorDB(): Promise<{ total: number; synced: number }> {
+  const faqs = await getAllFAQs();
+  let synced = 0;
+  for (const faq of faqs) {
+    const success = await syncFAQToVectorDB(faq);
+    if (success) synced++;
+  }
+  return { total: faqs.length, synced };
 }
 
 // ============================================

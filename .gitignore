@@ -14,8 +14,10 @@
 /coverage
 
 # next.js
-/.next/
+.next/
+**/.next/
 /out/
+Desktop/
 
 # production
 /build
@@ -61,3 +63,6 @@ data/chroma/*
 
 # Transformer models cache
 node_modules/.cache
+
+# Scratch tests
+scratch/

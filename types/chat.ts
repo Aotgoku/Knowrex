@@ -36,6 +36,12 @@ export interface MessageEscalation {
  * @property usedRAG - Whether RAG was used for this response
  * @property escalation - Escalation status for this message
  */
+export interface MessageAttachment {
+  data: string; // base64 string
+  mimeType: string;
+  name?: string;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -46,6 +52,7 @@ export interface Message {
   usedRAG?: boolean;
   escalation?: MessageEscalation;
   escalationId?: string; // ID if escalation was created
+  image?: MessageAttachment;
 }
 
 /**
@@ -60,7 +67,7 @@ export interface ChatMessageProps {
  * Props for the ChatInput component
  */
 export interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, image?: MessageAttachment) => void;
   isLoading: boolean;
   disabled?: boolean;
 }

@@ -4,9 +4,10 @@
 // Clears all vectors from local database
 // ============================================
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { resetCollection } from '@/lib/vectorStore';
 import { getAllDocuments, updateDocumentVectorStatus } from '@/lib/fileUtils';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 export interface ResetResponse {
   success: boolean;
@@ -16,10 +17,22 @@ export interface ResetResponse {
 
 /**
  * POST /api/chroma/reset
- * Reset the ChromaDB collection (delete all vectors)
+ * Reset the Vector database (delete all vectors) - Super Admin Only
  */
-export async function POST(): Promise<NextResponse<ResetResponse>> {
+export async function POST(request: NextRequest): Promise<NextResponse<ResetResponse>> {
   try {
+    // RBAC: Verify user has admin privileges
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (user && user.role !== 'admin') {
+      return NextResponse.json({
+        success: false,
+        message: 'Permission denied: Only Super Admins can reset the vector database.',
+        error: 'Forbidden'
+      }, { status: 403 });
+    }
+
     console.log('[API] Resetting vector database...');
     
     // Reset the collection

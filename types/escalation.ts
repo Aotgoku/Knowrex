@@ -218,10 +218,16 @@ export const ESCALATION_CATEGORIES = [
  */
 export const ESCALATION_KEYWORDS = [
   'speak to human',
+  'talk to human',
+  'talk to the human',
+  'human expert',
   'talk to person',
   'talk to someone',
   'real person',
   'human agent',
+  'connect to human',
+  'customer care',
+  'customer support agent',
   'not helpful',
   'wrong answer',
   'incorrect',

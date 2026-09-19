@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
 import { Escalation, EscalationStatus, EscalationUrgency, ESCALATION_CATEGORIES } from '@/types/escalation';
 
 interface EscalationDetailProps {
@@ -42,6 +43,50 @@ export default function EscalationDetail({
   const [assignTo, setAssignTo] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [isGeneratingAiReply, setIsGeneratingAiReply] = useState(false);
+  const [aiGenerated, setAiGenerated] = useState(false);
+  const [aiSourcesCount, setAiSourcesCount] = useState<number | null>(null);
+
+  const handleAiSuggestReply = async () => {
+    try {
+      setIsGeneratingAiReply(true);
+      const res = await fetch('/api/escalations/suggest-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: escalation.userQuestion,
+          attemptedAnswer: escalation.attemptedAnswer,
+          triggerReason: escalation.reason,
+          urgency: escalation.urgency
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.suggestedAnswer) {
+        setHumanAnswer(data.suggestedAnswer);
+        if (data.category && !category) {
+          setCategory(data.category);
+        }
+        if (data.tags && data.tags.length > 0 && !tags) {
+          setTags(data.tags.join(', '));
+        }
+        if (data.internalNote && !resolutionNotes) {
+          setResolutionNotes(data.internalNote);
+        }
+        if (!resolvedBy) {
+          setResolvedBy('Alex Rivera (Support Agent)');
+        }
+        setAiGenerated(true);
+        setAiSourcesCount(data.sourcesUsed?.length || 0);
+      } else {
+        alert(data.error || 'Failed to generate AI suggestion');
+      }
+    } catch (err) {
+      console.error('Error suggesting reply:', err);
+      alert('Failed to connect to AI Copilot service');
+    } finally {
+      setIsGeneratingAiReply(false);
+    }
+  };
 
   const getUrgencyColor = (urgency: EscalationUrgency) => {
     switch (urgency) {
@@ -289,14 +334,46 @@ export default function EscalationDetail({
                     </div>
 
                     <div>
-                      <label className="block text-sm text-gray-600 mb-1">Answer *</label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-sm font-semibold text-gray-800">Answer *</label>
+                        <button
+                          type="button"
+                          onClick={handleAiSuggestReply}
+                          disabled={isGeneratingAiReply || isLoading}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 active:scale-95 border border-purple-200 rounded-full transition-all shadow-sm disabled:opacity-50"
+                          title="Draft resolution with Gemini Copilot based on knowledge base"
+                        >
+                          {isGeneratingAiReply ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600" />
+                              <span>Drafting resolution...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                              <span>✨ AI Suggest Reply</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                       <textarea
                         value={humanAnswer}
-                        onChange={(e) => setHumanAnswer(e.target.value)}
-                        placeholder="Type your answer here..."
+                        onChange={(e) => {
+                          setHumanAnswer(e.target.value);
+                          if (aiGenerated) setAiGenerated(false);
+                        }}
+                        placeholder="Type your resolution answer here, or click '✨ AI Suggest Reply' above to auto-draft from knowledge base..."
                         rows={6}
-                        className="w-full px-3 py-2 border rounded resize-none"
+                        className="w-full px-3 py-2 border rounded resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none"
                       />
+                      {aiGenerated && (
+                        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded border border-emerald-200">
+                          <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+                          <span>
+                            Draft populated with Gemini AI Copilot {aiSourcesCount ? `(${aiSourcesCount} Pinecone vector sources referenced)` : ''}. Review or edit before resolving.
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div>

@@ -11,10 +11,13 @@ import {
   validateFile, 
   generateUniqueFilename, 
   ensureDirectories,
+  updateDocumentVectorStatus,
   UPLOADS_DIR 
 } from '@/lib/fileUtils';
 import { processDocument } from '@/lib/documentProcessor';
+import { syncDocumentToVectorDB } from '@/lib/vectorSearch';
 import { UploadResponse } from '@/types/document';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 // Rate limiting - simple in-memory store
 const uploadTimestamps: Map<string, number[]> = new Map();
@@ -43,10 +46,22 @@ function checkRateLimit(ip: string): boolean {
 
 /**
  * POST /api/upload
- * Handles file upload and processing
+ * Handles file upload and processing (Super Admin Only)
  */
 export async function POST(request: NextRequest): Promise<NextResponse<UploadResponse>> {
   try {
+    // RBAC: Verify user has admin privileges
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (user && user.role !== 'admin') {
+      return NextResponse.json({
+        success: false,
+        message: 'Permission denied: Only Super Admins can upload documents.',
+        error: 'Forbidden'
+      }, { status: 403 });
+    }
+
     // Rate limiting
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
     if (!checkRateLimit(ip)) {
@@ -102,11 +117,34 @@ export async function POST(request: NextRequest): Promise<NextResponse<UploadRes
       documentId
     );
     
+    // Auto-sync document chunks to vector database
+    let vectorSynced = false;
+    let vectorsCount = 0;
+    if (document.status === 'complete' && document.chunks && document.chunks.length > 0) {
+      try {
+        console.log(`[Upload API] Auto-syncing document ${document.id} to vector DB...`);
+        const syncResult = await syncDocumentToVectorDB(document);
+        if (syncResult.success) {
+          vectorSynced = true;
+          vectorsCount = syncResult.vectorsCreated;
+          await updateDocumentVectorStatus(document.id, {
+            vectorSynced: true,
+            vectorCount: vectorsCount,
+            lastSyncDate: new Date().toISOString(),
+            embeddingModel: 'all-MiniLM-L6-v2'
+          });
+          console.log(`[Upload API] Auto-sync complete: ${vectorsCount} vectors created`);
+        }
+      } catch (syncErr) {
+        console.warn('[Upload API] Auto-sync to vector DB failed:', syncErr);
+      }
+    }
+
     // Return success response
     return NextResponse.json({
       success: true,
       message: document.status === 'complete' 
-        ? `Successfully processed ${document.totalChunks} chunks`
+        ? `Successfully processed ${document.totalChunks} chunks${vectorSynced ? ` and synced ${vectorsCount} vectors to search database` : ''}`
         : 'Document uploaded but processing encountered issues',
       document: {
         id: document.id,
@@ -120,7 +158,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<UploadRes
         error: document.error,
         totalChunks: document.totalChunks,
         totalCharacters: document.totalCharacters,
-        processingTime: document.processingTime
+        processingTime: document.processingTime,
+        vectorSynced,
+        vectorCount: vectorsCount
       }
     });
     

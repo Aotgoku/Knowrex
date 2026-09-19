@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Bot, User, BookOpen, Sparkles, AlertTriangle, Users } from 'lucide-react';
 import { Message, MessageEscalation } from '@/types/chat';
 import SourceCitation from './SourceCitation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // ============================================
 // ChatMessage Component
@@ -110,12 +112,30 @@ export default function ChatMessage({
             color: isUser ? 'white' : 'var(--ai-text)'
           }}
         >
+          {/* Image Attachment (User upload) */}
+          {message.image && (
+            <div className="mb-2.5 overflow-hidden rounded-xl border border-white/20 max-w-xs shadow-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={message.image.data}
+                alt={message.image.name || 'User uploaded image'}
+                className="w-full h-auto max-h-56 object-cover rounded-lg cursor-pointer hover:opacity-95 transition-opacity"
+                onClick={() => {
+                  window.open(message.image?.data, '_blank');
+                }}
+                title="Click to view full image"
+              />
+            </div>
+          )}
+
           {/* 
             Message text with basic markdown-like rendering
             The prose-chat class handles styling for formatted content
           */}
-          <div className="prose-chat text-sm sm:text-base whitespace-pre-wrap break-words">
-            {message.content}
+          <div className="prose-chat text-sm sm:text-base break-words">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {message.content}
+            </ReactMarkdown>
           </div>
           
           {/* Source citations for RAG responses */}

@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { FileText, Upload, RefreshCw, Loader2 } from 'lucide-react';
+import { FileText, Upload, RefreshCw, Loader2, ShieldAlert } from 'lucide-react';
 import FileUpload from '@/components/admin/FileUpload';
 import DocumentList from '@/components/admin/DocumentList';
 import ChunkViewer from '@/components/admin/ChunkViewer';
 import { DocumentSummary, ProcessedDocument, DocumentStats } from '@/types/document';
+import { AuthUser } from '@/lib/auth';
 
 // ============================================
 // Documents Management Page
@@ -23,6 +24,17 @@ function DocumentsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
+  // Load session
+  useEffect(() => {
+    fetch('/api/auth')
+      .then(r => r.json())
+      .then(d => {
+        if (d.authenticated && d.user) setCurrentUser(d.user);
+      })
+      .catch(() => {});
+  }, []);
   
   // Chunk viewer state
   const [selectedDocument, setSelectedDocument] = useState<ProcessedDocument | null>(null);
@@ -93,6 +105,11 @@ function DocumentsContent() {
   
   // Delete document
   const handleDelete = async (id: string) => {
+    if (currentUser?.role === 'agent') {
+      alert('Permission Denied: Only Super Admins can delete organizational documents.');
+      return;
+    }
+
     try {
       const response = await fetch(`/api/documents/${id}`, {
         method: 'DELETE'
@@ -105,6 +122,8 @@ function DocumentsContent() {
         setDocuments(prev => prev.filter(d => d.id !== id));
         // Refresh stats
         fetchDocuments();
+      } else {
+        alert(data.message || data.error || 'Failed to delete document');
       }
     } catch (error) {
       console.error('Failed to delete document:', error);
@@ -113,6 +132,11 @@ function DocumentsContent() {
   
   // Retry processing
   const handleRetry = async (id: string) => {
+    if (currentUser?.role === 'agent') {
+      alert('Permission Denied: Only Super Admins can reprocess documents.');
+      return;
+    }
+
     try {
       const response = await fetch(`/api/documents/${id}`, {
         method: 'POST'
@@ -123,6 +147,8 @@ function DocumentsContent() {
       if (data.success) {
         // Refresh list
         fetchDocuments();
+      } else {
+        alert(data.message || data.error || 'Failed to retry processing');
       }
     } catch (error) {
       console.error('Failed to retry processing:', error);
@@ -135,8 +161,20 @@ function DocumentsContent() {
     fetchDocuments(); // Refresh stats
   };
   
+  const isAgent = currentUser?.role === 'agent';
+
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
+      {/* Role Notice for Support Agent */}
+      {isAgent && (
+        <div className="mb-6 p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 flex items-center gap-3 text-sm text-amber-800 dark:text-amber-300">
+          <ShieldAlert className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div>
+            <strong>Support Agent View:</strong> You have read-only access to documents. Ingestion, reprocessing, and deletion of knowledge files are restricted to Super Admins.
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -155,20 +193,22 @@ function DocumentsContent() {
           <button
             onClick={() => fetchDocuments(true)}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
             style={{ borderColor: 'var(--border-color)' }}
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} style={{ color: 'var(--muted)' }} />
             <span style={{ color: 'var(--foreground)' }}>Refresh</span>
           </button>
           
-          <button
-            onClick={() => setShowUpload(!showUpload)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-500 text-white transition-colors hover:bg-indigo-600"
-          >
-            <Upload className="w-4 h-4" />
-            <span>{showUpload ? 'Hide Upload' : 'Upload'}</span>
-          </button>
+          {!isAgent && (
+            <button
+              onClick={() => setShowUpload(!showUpload)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-500 text-white transition-colors hover:bg-indigo-600 cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              <span>{showUpload ? 'Hide Upload' : 'Upload'}</span>
+            </button>
+          )}
         </div>
       </div>
       

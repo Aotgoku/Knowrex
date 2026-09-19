@@ -4,7 +4,7 @@ import { performRAG, shouldUseRAG, getRAGSummary, RAGSource, cleanDocumentText }
 import { buildRAGPrompt, GENERAL_SYSTEM_PROMPT, formatContextWithSources, getCitationInstruction } from '@/lib/promptTemplates';
 import { MessageSource } from '@/types/chat';
 import { shouldEscalate, shouldOfferEscalation } from '@/lib/escalationSystem';
-import { EscalationTriggerResult, EscalationSource } from '@/types/escalation';
+import { EscalationTriggerResult, EscalationSource, ESCALATION_KEYWORDS } from '@/types/escalation';
 
 // ============================================
 // Gemini Chat API Route with RAG Support
@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { 
       message, 
+      image,
       history = [], 
       ragEnabled = true,  // RAG enabled by default
       minConfidence = 0.25,  // Lower threshold - semantic similarity is typically 20-50%
@@ -139,6 +140,53 @@ export async function POST(request: NextRequest) {
     const model = client.getGenerativeModel({ 
       model: 'gemini-2.5-flash'
     });
+
+    // ============================================
+    // 0. INTENT ROUTER: Check for explicit human escalation request
+    // If user explicitly asks for human/agent, DO NOT search docs or generate essays!
+    // ============================================
+    const lowerMessage = message.toLowerCase();
+    const isExplicitEscalation = ESCALATION_KEYWORDS.some(kw => lowerMessage.includes(kw));
+
+    if (isExplicitEscalation) {
+      console.log('[Chat API] Explicit escalation request intercepted:', message);
+      const escalationResponse = `I understand you would like to speak with a human support specialist.
+
+I have flagged this request for our support team. Please click the button below to connect with a representative right away.`;
+
+      const encoder = new TextEncoder();
+      const metadata = {
+        usedRAG: false,
+        sources: [],
+        confidence: 0,
+        type: 'metadata',
+        escalation: {
+          shouldEscalate: true,
+          reason: 'user_requested',
+          urgency: 'high',
+          message: 'Connecting you with human support...',
+          offerEscalation: true
+        },
+        documentsSearched: 0,
+        topMatchScore: 0
+      };
+
+      const readableStream = new ReadableStream({
+        start(controller) {
+          const metadataStr = `__RAG_METADATA__${JSON.stringify(metadata)}__END_METADATA__`;
+          controller.enqueue(encoder.encode(metadataStr));
+          controller.enqueue(encoder.encode(escalationResponse));
+          controller.close();
+        },
+      });
+
+      return new Response(readableStream, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Transfer-Encoding': 'chunked',
+        },
+      });
+    }
 
     // ============================================
     // RAG: Search for relevant document context
@@ -293,11 +341,11 @@ USER QUESTION: ${message}
     }
 
     // ============================================
-    // NO DOCUMENT MATCH - Return static response
-    // Don't use Gemini's general knowledge!
+    // NO DOCUMENT MATCH - Return static response (unless user attached an image)
+    // Don't use Gemini's general knowledge unless user provided an image to visually diagnose!
     // ============================================
-    if (noDocumentMatch) {
-      console.log('[Chat API] No document match - returning static response');
+    if (noDocumentMatch && !image?.data) {
+      console.log('[Chat API] No document match and no image - returning static response');
       
       const noMatchResponse = `I couldn't find any information related to your question in our knowledge base documents.
 
@@ -345,9 +393,42 @@ I can only answer questions based on the documents uploaded to our system. I don
       });
     }
 
+    // If no document context matched, but an image was attached, instruct Gemini to perform visual diagnosis
+    if (!usedRAG && image?.data) {
+      augmentedMessage = `The user has attached an image/screenshot for visual inspection along with their question.
+
+USER QUESTION: ${message}
+
+INSTRUCTIONS FOR MULTIMODAL DIAGNOSIS:
+1. Carefully inspect the attached screenshot or image.
+2. Transcribe and identify any error codes, alert messages, UI buttons, URLs, transaction IDs, or dialog boxes shown.
+3. Explain clearly what the image displays and directly diagnose the user's issue.
+4. Provide clear, actionable step-by-step guidance to resolve the problem.
+5. If the issue appears to require human agent intervention, advise them to connect with human support.`;
+    }
+
+    // Prepare message payload for Gemini (supports text or multimodal parts)
+    let messagePayload: string | Array<any> = augmentedMessage;
+    if (image?.data) {
+      const cleanBase64 = image.data.includes('base64,') 
+        ? image.data.split('base64,')[1] 
+        : image.data;
+
+      messagePayload = [
+        augmentedMessage,
+        {
+          inlineData: {
+            data: cleanBase64,
+            mimeType: image.mimeType || 'image/png'
+          }
+        }
+      ];
+      console.log('[Chat API] Sending Multimodal payload with image type:', image.mimeType);
+    }
+
     // Send the message and get a streaming response
     const result = await retryWithBackoff(
-      async () => await chat.sendMessageStream(augmentedMessage),
+      async () => await chat.sendMessageStream(messagePayload),
       3,
       2000
     );
