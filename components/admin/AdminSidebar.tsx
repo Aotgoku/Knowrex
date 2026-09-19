@@ -136,24 +136,9 @@ export default function AdminSidebar() {
           const active = isActive(item.href);
           const isRestrictedForAgent = isAgent && item.adminOnly;
           
+          // If feature is restricted for this role, hide it completely from sidebar
           if (isRestrictedForAgent) {
-            return (
-              <div
-                key={item.href}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg opacity-40 cursor-not-allowed select-none"
-                title="Restricted: Super Admin permission required"
-              >
-                <Lock className={`w-5 h-5 ${isCollapsed ? 'mx-auto' : ''}`} />
-                {!isCollapsed && (
-                  <span className="font-medium flex-1 text-sm">{item.label}</span>
-                )}
-                {!isCollapsed && (
-                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/10 text-amber-600 uppercase">
-                    Admin Only
-                  </span>
-                )}
-              </div>
-            );
+            return null;
           }
 
           return (

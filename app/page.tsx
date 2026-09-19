@@ -13,7 +13,8 @@ import {
   HelpCircle,
   AlertCircle,
   Settings,
-  BookOpen
+  BookOpen,
+  LayoutDashboard
 } from 'lucide-react';
 import ChatMessage from '@/components/ChatMessage';
 import ChatInput from '@/components/ChatInput';
@@ -764,15 +765,20 @@ export default function ChatPage() {
 
         {/* Header Actions */}
         <div className="flex items-center gap-2">
-          {/* Admin Dashboard Link */}
+          {/* Operations Portal Link */}
           <Link
             href="/admin"
-            className="p-2 rounded-lg transition-colors hover:bg-opacity-10 hover:bg-gray-500"
-            style={{ color: 'var(--muted)' }}
-            title="Admin Dashboard"
-            aria-label="Admin Dashboard"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-xs transition-all hover:opacity-80"
+            style={{ 
+              borderColor: 'var(--border-color)',
+              backgroundColor: 'var(--card-bg)',
+              color: 'var(--foreground)'
+            }}
+            title="Switch to Operations Portal (Dashboard, Escalations, Documents, Vectors)"
           >
-            <Settings className="w-5 h-5" />
+            <LayoutDashboard className="w-4 h-4 text-indigo-500" />
+            <span className="hidden sm:inline font-medium">Operations Portal</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold uppercase">Admin / Agent</span>
           </Link>
 
           {/* Clear Chat Button */}
