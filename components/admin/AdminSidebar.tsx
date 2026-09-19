@@ -41,6 +41,7 @@ const navItems: NavItem[] = [
   { href: '/admin/vectors', label: 'Vector DB', icon: Database, badge: 'PINECONE', adminOnly: true },
   { href: '/admin/escalations', label: 'Escalations', icon: Users, badge: 'LIVE' },
   { href: '/admin/escalations/analytics', label: 'Analytics', icon: BarChart2 },
+  { href: '/admin/evaluations', label: 'Eval Harness', icon: Shield, badge: 'GUARDRAILS', adminOnly: true },
   { href: '/', label: 'Customer Chat', icon: MessageSquare },
 ];
 

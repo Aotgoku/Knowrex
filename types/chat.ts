@@ -3,6 +3,7 @@
 // ============================================
 
 import { EscalationReason, EscalationUrgency } from './escalation';
+import { OutputGuardrailResult } from './guardrails';
 
 /**
  * Source information from RAG system
@@ -27,14 +28,6 @@ export interface MessageEscalation {
 
 /**
  * Represents a single chat message
- * @property id - Unique identifier for the message
- * @property role - Who sent the message: 'user' or 'assistant'
- * @property content - The actual message text
- * @property timestamp - When the message was created
- * @property sources - Document sources used for RAG responses
- * @property confidence - Average confidence score (0-1)
- * @property usedRAG - Whether RAG was used for this response
- * @property escalation - Escalation status for this message
  */
 export interface MessageAttachment {
   data: string; // base64 string
@@ -53,6 +46,11 @@ export interface Message {
   escalation?: MessageEscalation;
   escalationId?: string; // ID if escalation was created
   image?: MessageAttachment;
+  guardrail?: OutputGuardrailResult;
+  inputSafety?: {
+    piiRedacted?: boolean;
+    detectedPII?: string[];
+  };
 }
 
 /**

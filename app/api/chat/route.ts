@@ -5,6 +5,8 @@ import { buildRAGPrompt, GENERAL_SYSTEM_PROMPT, formatContextWithSources, getCit
 import { MessageSource } from '@/types/chat';
 import { shouldEscalate, shouldOfferEscalation } from '@/lib/escalationSystem';
 import { EscalationTriggerResult, EscalationSource, ESCALATION_KEYWORDS } from '@/types/escalation';
+import { evaluateInputGuardrails, evaluateOutputFaithfulness } from '@/lib/guardrails';
+import { getCachedItem, setCachedItem, checkRateLimit } from '@/lib/cache';
 
 // ============================================
 // Gemini Chat API Route with RAG Support
@@ -93,6 +95,7 @@ export async function POST(request: NextRequest) {
   // Variables for RAG metadata (will be sent in headers or separate response)
   let usedRAG = false;
   let sources: MessageSource[] = [];
+  let rawRAGSources: RAGSource[] = [];
   let confidence = 0;
   let escalationResult: EscalationTriggerResult | null = null;
   let documentsSearched = 0;
@@ -116,6 +119,109 @@ export async function POST(request: NextRequest) {
         JSON.stringify({ error: 'Message is required' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Rate Limiting check (Token bucket per client IP)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'anonymous';
+    const rateCheck = await checkRateLimit(ip, 35, 60);
+    if (!rateCheck.allowed) {
+      return new Response(
+        JSON.stringify({ error: `⚠️ Rate limit exceeded. Please wait ${rateCheck.resetInSeconds}s before sending more requests.` }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ============================================
+    // Enterprise Input Safety Guardrails
+    // 1. Jailbreak & Prompt Injection Defense
+    // 2. Personally Identifiable Information (PII) Redaction
+    // ============================================
+    const inputGuard = evaluateInputGuardrails(message);
+
+    if (!inputGuard.allowed) {
+      console.warn('[Guardrail] 🚨 Blocked malicious prompt injection:', inputGuard.detectedThreats);
+      const blockedText = `⚠️ **Enterprise Safety Guardrail Alert**\n\nYour message was intercepted by our Security & Prompt-Injection Guardrail.\n\n*Reason: ${inputGuard.reason || 'Malicious instruction pattern detected.'}*\n\nKnowrex is an official customer support assistant and only answers queries regarding official company products, orders, and policies.`;
+
+      const encoder = new TextEncoder();
+      const metadata = {
+        usedRAG: false,
+        sources: [],
+        confidence: 0,
+        type: 'metadata',
+        escalation: null,
+        inputSafety: {
+          passed: false,
+          piiMasked: false,
+          threatsDetected: inputGuard.detectedThreats
+        },
+        guardrail: {
+          faithfulnessScore: 0,
+          isGrounded: false,
+          hallucinationRisk: 'high',
+          totalClaimsChecked: 0,
+          groundedClaimsCount: 0,
+          claims: [],
+          flaggedHallucinations: [],
+          evaluationSummary: 'Request rejected at Input Safety Guardrail layer.',
+          verifiedAt: new Date().toISOString()
+        }
+      };
+
+      const readableStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(`__RAG_METADATA__${JSON.stringify(metadata)}__END_METADATA__`));
+          controller.enqueue(encoder.encode(blockedText));
+          controller.close();
+        }
+      });
+
+      return new Response(readableStream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      });
+    }
+
+    // Use sanitized message with redacted PII
+    const activeMessage = inputGuard.sanitizedText;
+
+    // ============================================
+    // Redis Semantic Cache Check
+    // ============================================
+    const cacheKey = `${activeMessage.toLowerCase().trim()}|${selectedDocumentId || 'all'}`;
+    if (!image && history.length === 0) {
+      const cached = await getCachedItem<{ answer: string; sources: MessageSource[]; confidence: number; guardrail: any }>(cacheKey);
+      if (cached) {
+        console.log('[Cache] ⚡ Redis Cache Hit for query:', activeMessage.slice(0, 40));
+        const encoder = new TextEncoder();
+        const metadata = {
+          usedRAG: cached.sources.length > 0,
+          sources: cached.sources,
+          confidence: cached.confidence,
+          type: 'metadata',
+          escalation: null,
+          cached: true,
+          inputSafety: {
+            passed: true,
+            piiMasked: inputGuard.piiRedacted,
+            threatsDetected: []
+          },
+          guardrail: cached.guardrail
+        };
+
+        const readableStream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(encoder.encode(`__RAG_METADATA__${JSON.stringify(metadata)}__END_METADATA__`));
+            controller.enqueue(encoder.encode(cached.answer));
+            controller.close();
+          }
+        });
+
+        return new Response(readableStream, {
+          headers: { 
+            'Content-Type': 'text/plain; charset=utf-8',
+            'X-Cache-Status': 'HIT'
+          }
+        });
+      }
     }
 
     // Check if API key is configured
@@ -201,7 +307,7 @@ I have flagged this request for our support team. Please click the button below 
       }
       
       try {
-        const ragResult = await performRAG(message, {
+        const ragResult = await performRAG(activeMessage, {
           topK: 20,  // Search more chunks for comprehensive coverage
           minScore: minConfidence,
           documentId: selectedDocumentId  // Filter to specific document if set
@@ -209,6 +315,7 @@ I have flagged this request for our support team. Please click the button below 
         
         if (ragResult.hasContext) {
           usedRAG = true;
+          rawRAGSources = ragResult.sources;
           sources = toMessageSources(ragResult.sources);
           confidence = ragResult.avgConfidence;
           documentsSearched = ragResult.sources.length;
@@ -322,7 +429,7 @@ DO:
 ${contextParts}
 
 ---
-USER QUESTION: ${message}
+USER QUESTION: ${activeMessage}
 ---
 
 📌 RESPONSE REQUIREMENTS:
@@ -470,12 +577,34 @@ INSTRUCTIONS FOR MULTIMODAL DIAGNOSIS:
           controller.enqueue(encoder.encode(metadataStr));
           
           // Then stream the actual response
+          let accumulatedText = '';
           for await (const chunk of result.stream) {
             const text = chunk.text();
             if (text) {
+              accumulatedText += text;
               controller.enqueue(encoder.encode(text));
             }
           }
+
+          // Evaluate Output Safety & RAG Groundedness on the completed response
+          try {
+            const outputGuard = await evaluateOutputFaithfulness(activeMessage, accumulatedText, rawRAGSources);
+            const guardMetadataStr = `__GUARDRAIL_METADATA__${JSON.stringify(outputGuard)}__END_GUARDRAIL__`;
+            controller.enqueue(encoder.encode(guardMetadataStr));
+
+            // Cache in Redis / Memory for 5 minutes if RAG was used
+            if (!image && history.length === 0 && usedRAG) {
+              setCachedItem(cacheKey, {
+                answer: accumulatedText,
+                sources,
+                confidence,
+                guardrail: outputGuard
+              }, 300).catch(cacheErr => console.warn('[Cache] setCachedItem error:', cacheErr));
+            }
+          } catch (guardErr) {
+            console.warn('[Guardrail] Output evaluation error:', guardErr);
+          }
+
           controller.close();
         } catch (streamError) {
           console.error('Stream error:', streamError);

@@ -508,6 +508,8 @@ export default function ChatPage() {
           urgency: string;
           message: string;
         };
+        guardrail?: any;
+        inputSafety?: any;
       } = {};
       let metadataExtracted = false;
       
@@ -520,12 +522,15 @@ export default function ChatPage() {
         const chunk = decoder.decode(value, { stream: true });
         accumulatedContent += chunk;
         
+        let guardrailMetadata: any = ragMetadata.guardrail || null;
+
         // Extract RAG metadata from the beginning of the response
         if (!metadataExtracted && accumulatedContent.includes('__END_METADATA__')) {
           const metadataMatch = accumulatedContent.match(/__RAG_METADATA__(.+?)__END_METADATA__/);
           if (metadataMatch) {
             try {
               ragMetadata = JSON.parse(metadataMatch[1]);
+              if (ragMetadata.guardrail) guardrailMetadata = ragMetadata.guardrail;
               console.log('[Frontend] Parsed RAG metadata:', ragMetadata);
               console.log('[Frontend] usedRAG:', ragMetadata.usedRAG, 'sources:', ragMetadata.sources?.length);
               if (ragMetadata.escalation) {
@@ -540,8 +545,25 @@ export default function ChatPage() {
           }
         }
 
+        // Extract Guardrail Groundedness metadata if present at the end
+        if (accumulatedContent.includes('__END_GUARDRAIL__')) {
+          const guardMatch = accumulatedContent.match(/__GUARDRAIL_METADATA__(.+?)__END_GUARDRAIL__/);
+          if (guardMatch) {
+            try {
+              guardrailMetadata = JSON.parse(guardMatch[1]);
+              console.log('[Frontend] Parsed Guardrail metadata:', guardrailMetadata);
+            } catch (e) {
+              console.error('Failed to parse Guardrail metadata:', e);
+            }
+            accumulatedContent = accumulatedContent.replace(/__GUARDRAIL_METADATA__.+?__END_GUARDRAIL__/, '');
+          }
+        }
+
         // Update the message content with the accumulated text (without metadata)
-        const displayContent = accumulatedContent.replace(/__RAG_METADATA__.+?__END_METADATA__/, '');
+        const displayContent = accumulatedContent
+          .replace(/__RAG_METADATA__.+?__END_METADATA__/, '')
+          .replace(/__GUARDRAIL_METADATA__.+?__END_GUARDRAIL__/, '');
+
         setMessages(prev => prev.map(msg => 
           msg.id === assistantMessageId
             ? { 
@@ -550,7 +572,9 @@ export default function ChatPage() {
                 usedRAG: ragMetadata.usedRAG,
                 sources: ragMetadata.sources,
                 confidence: ragMetadata.confidence,
-                escalation: ragMetadata.escalation as Message['escalation']
+                escalation: ragMetadata.escalation as Message['escalation'],
+                guardrail: guardrailMetadata,
+                inputSafety: ragMetadata.inputSafety
               }
             : msg
         ));
@@ -596,7 +620,10 @@ export default function ChatPage() {
       }
 
       // Trigger Voice AI audio readout if not muted
-      const cleanVoiceText = accumulatedContent.replace(/__RAG_METADATA__.+?__END_METADATA__/, '').trim();
+      const cleanVoiceText = accumulatedContent
+        .replace(/__RAG_METADATA__.+?__END_METADATA__/, '')
+        .replace(/__GUARDRAIL_METADATA__.+?__END_GUARDRAIL__/, '')
+        .trim();
       if (cleanVoiceText && !voiceChat.isMuted) {
         voiceChat.speakText(cleanVoiceText);
       }
