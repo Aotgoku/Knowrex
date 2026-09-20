@@ -47,6 +47,7 @@ export interface Message {
   escalationId?: string; // ID if escalation was created
   image?: MessageAttachment;
   guardrail?: OutputGuardrailResult;
+  isStreaming?: boolean;
   inputSafety?: {
     piiRedacted?: boolean;
     detectedPII?: string[];
