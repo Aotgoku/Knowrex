@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 /* ============================================
@@ -673,4 +674,64 @@ h1, h2, h3, h4, h5, h6 {
 .dark .bg-dot-grid {
   background-image: radial-gradient(rgba(129, 140, 248, 0.12) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+/* ============================================
+   Awwwards & Editorial Typography & Animation Utilities
+   ============================================ */
+.font-instrument {
+  font-family: 'Instrument Serif', Georgia, serif;
+}
+
+@keyframes marqueeAnimation {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: 200%;
+  animation: marqueeAnimation 30s linear infinite;
+}
+
+@keyframes fadeUpAnim {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUpAnim 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes blinkAnim {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blinkAnim 1s step-end infinite;
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .glass-button {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
 }
