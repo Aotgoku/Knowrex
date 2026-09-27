@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, RefreshCw, BarChart3, AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
+import { Users, RefreshCw, BarChart3, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { Escalation, EscalationStats } from '@/types/escalation';
 import EscalationList from '@/components/escalations/EscalationList';
 import EscalationFilters from '@/components/escalations/EscalationFilters';
@@ -219,18 +220,42 @@ export default function EscalationsPage() {
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Breadcrumb & Navigation */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+          <Link href="/" className="hover:text-foreground transition-colors">Overview</Link>
+          <span>/</span>
+          <Link href="/admin" className="hover:text-foreground transition-colors">Operations</Link>
+          <span>/</span>
+          <span className="text-foreground font-semibold">Human Escalations</span>
+        </div>
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-border bg-card/60 hover:bg-card hover:border-white/20 transition-all text-muted-foreground hover:text-foreground cursor-pointer shadow-xs"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Operations</span>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60 dark:border-slate-800/60">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-              Human Escalations Workspace
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Live human-in-the-loop support desk with automated KB learning integration
+            <div className="flex items-center gap-3">
+              <h1 className="font-instrument text-3xl md:text-4xl font-normal tracking-tight text-foreground">
+                Human Escalations Workspace
+              </h1>
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-widest uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Live WebSockets
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              Live human-in-the-loop support desk with automated Pinecone learning integration.
             </p>
           </div>
         </div>
@@ -238,9 +263,9 @@ export default function EscalationsPage() {
           <button
             onClick={fetchEscalations}
             disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:bg-slate-50 dark:hover:bg-slate-900 text-foreground font-semibold text-xs transition-colors cursor-pointer shadow-xs"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-inherit glass-button text-foreground font-semibold text-xs transition-colors cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 text-indigo-500 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-indigo-400 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Refresh Queue</span>
           </button>
           <button

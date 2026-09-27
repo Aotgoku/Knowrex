@@ -92,22 +92,42 @@ export default function VectorDBPage() {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <Database className="h-8 w-8 text-purple-500" />
-          <h1 
-            className="text-2xl md:text-3xl font-bold"
-            style={{ color: 'var(--foreground)' }}
-          >
-            Vector Database
-          </h1>
-          <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-            PINECONE SERVERLESS · CLOUD
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-white/10">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-mono text-muted mb-1.5">
+            <Link href="/" className="hover:text-foreground transition-colors">Overview</Link>
+            <span>/</span>
+            <Link href="/admin" className="hover:text-foreground transition-colors">Operations</Link>
+            <span>/</span>
+            <span className="text-foreground">Vector DB</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 mb-1">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+              <Database className="h-4.5 w-4.5" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-instrument text-foreground tracking-tight">
+              Vector Database & Pinecone Index
+            </h1>
+            <span className="font-mono text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              PINECONE SERVERLESS · US-EAST-1
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-muted max-w-2xl">
+            Real-time vector index orchestration, Xenova 384-dimensional embeddings, and sub-50ms cosine similarity retrieval telemetry.
+          </p>
         </div>
-        <p style={{ color: 'var(--muted)' }}>
-          Manage your cloud Pinecone vector database and test semantic search
-        </p>
+
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 glass-button text-xs font-semibold text-muted hover:text-foreground transition-all"
+            title="Back to Operations Command Center"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Operations</span>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Card */}

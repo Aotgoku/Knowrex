@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listEscalationsFromDb } from '@/lib/escalationDb';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 export interface KnowledgeGapItem {
   id: string;
@@ -16,9 +17,20 @@ export interface KnowledgeGapItem {
 /**
  * GET /api/analytics/knowledge-gaps
  * Detects missing knowledge base coverage and unaddressed customer inquiry clusters.
+ * (Admin / Agent Only)
  */
 export async function GET(request: NextRequest) {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Authentication required to view knowledge gaps analytics.'
+      }, { status: 401 });
+    }
+
     // 1. Fetch real escalations to identify low-confidence or unaddressed questions
     let realEscalations: any[] = [];
     try {
@@ -106,7 +118,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('[KnowledgeGaps] Error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to detect knowledge gaps' },
+      { success: false, error: process.env.NODE_ENV === 'production' ? 'Failed to detect knowledge gaps' : (error?.message || 'Failed to detect knowledge gaps') },
       { status: 500 }
     );
   }

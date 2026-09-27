@@ -54,7 +54,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<UploadRes
     const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
     const user = deserializeSession(sessionCookie);
 
-    if (user && user.role !== 'admin') {
+    if (!user || user.role !== 'admin') {
       return NextResponse.json({
         success: false,
         message: 'Permission denied: Only Super Admins can upload documents.',

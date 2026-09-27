@@ -9,6 +9,8 @@ import {
   Menu, 
   X,
   ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
   LayoutDashboard,
   Moon,
   Sun,
@@ -21,6 +23,7 @@ import {
   Headphones
 } from 'lucide-react';
 import { AuthUser } from '@/lib/auth';
+import KnowrexLogo from '@/components/KnowrexLogo';
 
 // ============================================
 // AdminSidebar Component
@@ -42,7 +45,7 @@ const navItems: NavItem[] = [
   { href: '/admin/escalations', label: 'Escalations', icon: Users, badge: 'LIVE' },
   { href: '/admin/escalations/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/admin/evaluations', label: 'Eval Harness', icon: Shield, badge: 'GUARDRAILS', adminOnly: true },
-  { href: '/', label: 'Customer Chat', icon: MessageSquare },
+  { href: '/chat', label: 'Customer Chat', icon: MessageSquare },
 ];
 
 export default function AdminSidebar() {
@@ -106,33 +109,61 @@ export default function AdminSidebar() {
   };
   
   const isActive = (href: string) => {
+    // Exact match is always active
+    if (pathname === href) return true;
+
+    // If another navItem is a more specific match for this pathname, don't match the parent
+    const hasMoreSpecificMatch = navItems.some(
+      item => item.href !== href && item.href.startsWith(href + '/') && (pathname === item.href || pathname.startsWith(item.href + '/'))
+    );
+    if (hasMoreSpecificMatch) return false;
+
     if (href === '/admin' || href === '/') {
       return pathname === href;
     }
-    return pathname === href || pathname.startsWith(href + '/');
+    return pathname.startsWith(href + '/');
   };
 
   const isAgent = currentUser?.role === 'agent';
   
   const SidebarContent = () => (
     <>
-      {/* Brand Header */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-slate-200/80 dark:border-white/10">
-        <div className="relative group shrink-0">
-          <div className="absolute inset-0 bg-indigo-500 rounded-xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
-          <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md border border-white/20">
-            <FileText className="w-5 h-5 text-white" />
-          </div>
+      {/* Brand Header with Top Collapse Toggle */}
+      <div className={`flex items-center ${isCollapsed ? 'flex-col justify-center py-4 px-2' : 'justify-between px-4 py-4'} border-b border-slate-200/80 dark:border-white/10`}>
+        <div className="flex items-center gap-3 overflow-hidden">
+          <Link href="/" className="cursor-pointer">
+            <KnowrexLogo 
+              size={isCollapsed ? 'sm' : 'md'} 
+              showWordmark={!isCollapsed} 
+              badge={isCollapsed ? undefined : "OS"} 
+            />
+          </Link>
         </div>
-        {!isCollapsed && (
-          <div className="overflow-hidden">
-            <div className="flex items-center gap-1.5">
-              <h1 className="font-extrabold text-base leading-tight text-foreground tracking-tight">Knowrex</h1>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase">OS</span>
-            </div>
-            <p className="text-[11px] text-muted font-medium">Enterprise AI Portal</p>
-          </div>
-        )}
+
+        {/* Top Collapse / Expand Hamburger Menu Toggle */}
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(prev => !prev)}
+          className={`p-2 rounded-xl border border-slate-200/90 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 text-muted hover:text-foreground hover:border-indigo-500/30 hover:bg-slate-200/70 dark:hover:bg-white/10 transition-all cursor-pointer shadow-xs ${isCollapsed ? 'mt-2.5' : ''}`}
+          title={isCollapsed ? "Expand Sidebar (Menu)" : "Collapse Sidebar (Menu)"}
+          aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          <Menu className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+        </button>
+      </div>
+
+      {/* Back to Public Overview Link */}
+      <div className="px-3 pt-3 pb-1">
+        <Link
+          href="/"
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-muted hover:text-foreground hover:bg-slate-100/70 dark:hover:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all ${
+            isCollapsed ? 'justify-center px-0' : ''
+          }`}
+          title="Return to Public Overview"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 shrink-0 text-muted" />
+          {!isCollapsed && <span>Back to Overview</span>}
+        </Link>
       </div>
 
       {/* Navigation */}
@@ -236,7 +267,7 @@ export default function AdminSidebar() {
       )}
       
       {/* Footer actions */}
-      <div className="p-3 border-t border-slate-200/80 dark:border-white/10 space-y-1">
+      <div className="p-3 pb-8 border-t border-slate-200/80 dark:border-white/10 space-y-1">
         {/* Dark mode toggle */}
         <button
           type="button"
@@ -263,16 +294,6 @@ export default function AdminSidebar() {
             {!isCollapsed && <span>{loggingOut ? 'Signing out...' : 'Sign Out'}</span>}
           </button>
         )}
-        
-        {/* Collapse button - desktop only */}
-        <button
-          type="button"
-          onClick={() => setIsCollapsed(prev => !prev)}
-          className="hidden md:flex w-full items-center gap-3 px-3 py-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer text-xs text-muted hover:text-foreground"
-        >
-          <ChevronLeft className={`w-4 h-4 transition-transform ${isCollapsed ? 'rotate-180 mx-auto' : ''}`} />
-          {!isCollapsed && <span>Collapse Sidebar</span>}
-        </button>
       </div>
     </>
   );
@@ -300,14 +321,13 @@ export default function AdminSidebar() {
       <aside 
         className={`md:hidden fixed top-0 left-0 h-full w-64 z-50 transform transition-transform duration-300 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        style={{ backgroundColor: 'var(--card-bg)' }}
+        } bg-white dark:bg-[#0A0A0A] border-r border-slate-200 dark:border-white/10 shadow-2xl`}
       >
         <button
           onClick={() => setIsMobileOpen(false)}
-          className="absolute top-4 right-4 p-1"
+          className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white"
         >
-          <X className="w-5 h-5" style={{ color: 'var(--muted)' }} />
+          <X className="w-5 h-5" />
         </button>
         <div className="flex flex-col h-full">
           <SidebarContent />
@@ -318,11 +338,7 @@ export default function AdminSidebar() {
       <aside 
         className={`hidden md:flex flex-col h-screen sticky top-0 border-r transition-all duration-300 ${
           isCollapsed ? 'w-20' : 'w-64'
-        }`}
-        style={{ 
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--border-color)'
-        }}
+        } bg-white dark:bg-[#0A0A0A] border-slate-200 dark:border-white/10 shadow-xs`}
       >
         <SidebarContent />
       </aside>

@@ -29,11 +29,11 @@ const colorClasses = {
 };
 
 const iconBgClasses = {
-  primary: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
-  success: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
-  warning: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
-  error: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
-  info: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+  primary: 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400',
+  success: 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400',
+  warning: 'bg-amber-500/10 border border-amber-500/20 text-amber-400',
+  error: 'bg-red-500/10 border border-red-500/20 text-red-400',
+  info: 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
 };
 
 export default function StatsCard({ 
@@ -46,47 +46,38 @@ export default function StatsCard({
 }: StatsCardProps) {
   return (
     <div 
-      className="glass-card glow-card relative overflow-hidden rounded-2xl p-6 transition-all duration-300"
+      className="glass-card relative overflow-hidden rounded-2xl p-4 sm:p-5 border border-white/10 dark:border-white/10 bg-white/[0.02] transition-all duration-300"
     >
       {/* Subtle top edge gradient accent */}
       <div 
-        className={`absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r ${colorClasses[color]} opacity-80`}
+        className={`absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r ${colorClasses[color]} opacity-60`}
       />
       
       <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p 
-            className="text-sm font-medium mb-1"
-            style={{ color: 'var(--muted)' }}
-          >
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-mono uppercase tracking-wider text-muted font-medium mb-1 truncate">
             {title}
           </p>
-          <p 
-            className="text-3xl font-bold"
-            style={{ color: 'var(--foreground)' }}
-          >
+          <p className="text-2xl sm:text-3xl font-mono font-semibold text-foreground tracking-tight">
             {value}
           </p>
           {subtitle && (
-            <p 
-              className="text-xs mt-1"
-              style={{ color: 'var(--muted)' }}
-            >
+            <p className="text-[11px] font-mono text-muted mt-1 truncate">
               {subtitle}
             </p>
           )}
           {trend && (
-            <p className={`text-xs mt-2 flex items-center gap-1 ${
-              trend.isPositive ? 'text-emerald-500' : 'text-red-500'
+            <p className={`text-[11px] font-mono mt-1.5 flex items-center gap-1 ${
+              trend.isPositive ? 'text-emerald-400' : 'text-red-400'
             }`}>
               {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
-              <span style={{ color: 'var(--muted)' }}>from last week</span>
+              <span className="text-muted">vs last cycle</span>
             </p>
           )}
         </div>
         
-        <div className={`p-3 rounded-xl ${iconBgClasses[color]}`}>
-          <Icon className="w-6 h-6" />
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ml-3 ${iconBgClasses[color]}`}>
+          <Icon className="w-4 h-4" />
         </div>
       </div>
     </div>

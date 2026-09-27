@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { FileText, Upload, RefreshCw, Loader2, ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
+import { FileText, Upload, RefreshCw, Loader2, ShieldAlert, ArrowLeft } from 'lucide-react';
 import FileUpload from '@/components/admin/FileUpload';
 import DocumentList from '@/components/admin/DocumentList';
 import ChunkViewer from '@/components/admin/ChunkViewer';
@@ -176,37 +177,50 @@ function DocumentsContent() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 
-            className="text-2xl md:text-3xl font-bold mb-1"
-            style={{ color: 'var(--foreground)' }}
-          >
-            Documents
-          </h1>
-          <p style={{ color: 'var(--muted)' }}>
-            Manage your uploaded documents and view processed chunks
+          <div className="flex flex-wrap items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <FileText className="h-5 w-5" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-instrument text-foreground tracking-tight">
+              Enterprise Knowledge Ingestion
+            </h1>
+            <span className="font-mono text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              RAG CORPUS REPOSITORY
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground font-normal">
+            Multi-modal document parsing, recursive chunk slicing, and vector synchronization pipeline.
           </p>
         </div>
         
         <div className="flex items-center gap-2">
+          <Link
+            href="/admin"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 glass-button text-xs font-semibold text-muted hover:text-foreground transition-all"
+            title="Back to Operations Command Center"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Operations</span>
+          </Link>
+
           <button
             onClick={() => fetchDocuments(true)}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-            style={{ borderColor: 'var(--border-color)' }}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-white/10 dark:border-white/10 bg-white/5 dark:bg-white/[0.03] backdrop-blur-md transition-all hover:bg-white/10 text-foreground cursor-pointer text-xs font-medium"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} style={{ color: 'var(--muted)' }} />
-            <span style={{ color: 'var(--foreground)' }}>Refresh</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''} text-muted-foreground`} />
+            <span>Refresh</span>
           </button>
           
           {!isAgent && (
             <button
               onClick={() => setShowUpload(!showUpload)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-500 text-white transition-colors hover:bg-indigo-600 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/25 transition-all cursor-pointer"
             >
-              <Upload className="w-4 h-4" />
-              <span>{showUpload ? 'Hide Upload' : 'Upload'}</span>
+              <Upload className="w-3.5 h-3.5" />
+              <span>{showUpload ? 'Hide Upload' : 'Upload Documents'}</span>
             </button>
           )}
         </div>
@@ -214,30 +228,31 @@ function DocumentsContent() {
       
       {/* Stats Summary */}
       {stats && (
-        <div className="glass-card flex flex-wrap items-center gap-4 p-4 rounded-2xl mb-6 shadow-xs">
+        <div className="glass-card flex flex-wrap items-center gap-5 p-4 rounded-2xl mb-8 border border-white/10 dark:border-white/10 bg-white/[0.02] backdrop-blur-md">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-indigo-500" />
-            <span className="text-foreground">
-              <strong>{stats.totalDocuments}</strong> documents
+            <FileText className="w-4 h-4 text-indigo-400" />
+            <span className="text-foreground text-xs">
+              <strong className="font-mono text-sm text-foreground">{stats.totalDocuments}</strong> documents
             </span>
           </div>
-          <div className="w-px h-5 bg-slate-200 dark:bg-slate-800" />
-          <span className="text-muted-foreground">
-            <strong>{stats.totalChunks.toLocaleString()}</strong> chunks
+          <div className="w-px h-4 bg-white/10" />
+          <span className="text-muted-foreground text-xs">
+            <strong className="font-mono text-sm text-foreground">{stats.totalChunks.toLocaleString()}</strong> chunks
           </span>
-          <div className="w-px h-5 bg-slate-200 dark:bg-slate-800" />
-          <span className="text-muted-foreground">
-            <strong>{stats.storageFormatted}</strong> storage
+          <div className="w-px h-4 bg-white/10" />
+          <span className="text-muted-foreground text-xs">
+            <strong className="font-mono text-sm text-foreground">{stats.storageFormatted}</strong> storage
           </span>
-          <div className="w-px h-5 bg-slate-200 dark:bg-slate-800" />
-          <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-            <strong>{stats.documentsByStatus.complete}</strong> complete
+          <div className="w-px h-4 bg-white/10" />
+          <span className="text-emerald-400 font-medium text-xs flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <strong className="font-mono text-sm">{stats.documentsByStatus.complete}</strong> complete
           </span>
           {stats.documentsByStatus.error > 0 && (
             <>
-              <div className="w-px h-5 bg-slate-200 dark:bg-slate-800" />
-              <span className="text-red-500 font-medium">
-                <strong>{stats.documentsByStatus.error}</strong> errors
+              <div className="w-px h-4 bg-white/10" />
+              <span className="text-red-400 font-medium text-xs">
+                <strong className="font-mono text-sm">{stats.documentsByStatus.error}</strong> errors
               </span>
             </>
           )}

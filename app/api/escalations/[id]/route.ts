@@ -21,8 +21,10 @@ import {
   updateEscalationInDb,
   deleteEscalationFromDb
 } from '@/lib/escalationDb';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 interface RouteParams {
+
   params: Promise<{ id: string }>;
 }
 
@@ -64,11 +66,22 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Operational credentials required to update escalations.'
+      }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { action, ...data } = body;
 
     let result = null;
+
 
     switch (action) {
       case 'assign':
@@ -193,7 +206,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Only Super Admins can delete escalation records.'
+      }, { status: 401 });
+    }
+
     const { id } = await params;
+
     let success = await deleteEscalationFromDb(id);
     if (!success) {
       success = await deleteEscalation(id);

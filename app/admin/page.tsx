@@ -9,6 +9,7 @@ import {
   Clock,
   Upload,
   ArrowRight,
+  ArrowLeft,
   AlertCircle,
   CheckCircle2,
   Loader2,
@@ -100,25 +101,34 @@ export default function AdminDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200/60 dark:border-slate-800/60">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-              Executive AI Operations Center
+            <h1 className="font-instrument text-3xl md:text-4xl font-normal tracking-tight text-foreground">
+              Operations Command Center
             </h1>
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-widest uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               All Systems Operational
             </span>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Real-time telemetry across Pinecone Cloud RAG, Human Escalations, and AI Guardrails.
           </p>
         </div>
 
         {/* Quick Launch Header Actions */}
         <div className="flex items-center gap-2.5">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/10 glass-button text-xs font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+            title="Back to Public Overview"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Overview</span>
+          </Link>
+
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
-            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+            className="p-2.5 rounded-xl border border-inherit glass-button transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
             title="Refresh Live Telemetry"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-indigo-500' : ''}`} />
@@ -126,16 +136,15 @@ export default function AdminDashboard() {
           
           <Link
             href="/admin/evaluations"
-            className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-xs font-semibold hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 transition-colors shadow-xs"
+            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full glass-button text-xs font-semibold hover:text-foreground transition-colors"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
             <span>RAG Eval Suite</span>
           </Link>
 
           <Link
-            href="/"
-            target="_blank"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-xs shadow-md shadow-indigo-500/20 hover:opacity-95 transition-opacity"
+            href="/chat"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-xs shadow-md shadow-indigo-500/20 hover:opacity-95 transition-opacity"
           >
             <span>Customer Chat</span>
             <ExternalLink className="w-3.5 h-3.5" />

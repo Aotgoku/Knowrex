@@ -7,13 +7,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processKBQueue, getKBStats, generateKnowledgeSummary } from '@/lib/knowledgeLoop';
 import { getKBPendingEscalations } from '@/lib/escalationSystem';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 /**
  * GET /api/knowledge/process
- * Get KB processing status and pending items
+ * Get KB processing status and pending items (Admin / Agent Only)
  */
 export async function GET(request: NextRequest) {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Authentication required.'
+      }, { status: 401 });
+    }
+
     const pendingEscalations = await getKBPendingEscalations();
     const stats = await getKBStats();
     const summary = await generateKnowledgeSummary();
@@ -41,10 +52,20 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/knowledge/process
- * Process the KB queue (add resolved escalations to knowledge base)
+ * Process the KB queue (Admin / Agent Only)
  */
 export async function POST(request: NextRequest) {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Authentication required to process KB queue.'
+      }, { status: 401 });
+    }
+
     const result = await processKBQueue();
 
     return NextResponse.json({
@@ -55,7 +76,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error processing KB queue:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to process KB queue' },
+      { success: false, error: process.env.NODE_ENV === 'production' ? 'Failed to process KB queue' : 'Failed to process KB queue' },
       { status: 500 }
     );
   }

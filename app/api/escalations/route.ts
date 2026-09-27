@@ -21,13 +21,25 @@ import {
   EscalationStatus,
   EscalationUrgency
 } from '@/types/escalation';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/cache';
 
 /**
  * GET /api/escalations
- * List escalations with optional filters
+ * List escalations with optional filters (Admin / Agent Only)
  */
 export async function GET(request: NextRequest) {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Authentication required to view support escalations.'
+      }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     
     // Parse filters
@@ -90,19 +102,36 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit creation: max 15 requests per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'anonymous';
+    const rateCheck = await checkRateLimit(`escalation:${ip}`, 15, 60);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Too many escalation requests. Please wait a moment.' },
+        { status: 429 }
+      );
+    }
+
     const body: CreateEscalationRequest = await request.json();
 
     // Validate required fields
-    if (!body.userQuestion) {
+    if (!body.userQuestion || typeof body.userQuestion !== 'string') {
       return NextResponse.json(
         { success: false, error: 'User question is required' },
         { status: 400 }
       );
     }
 
-    if (body.confidenceScore === undefined) {
+    if (body.userQuestion.length > 5000) {
       return NextResponse.json(
-        { success: false, error: 'Confidence score is required' },
+        { success: false, error: 'Question exceeds maximum length of 5000 characters' },
+        { status: 400 }
+      );
+    }
+
+    if (body.confidenceScore === undefined || typeof body.confidenceScore !== 'number') {
+      return NextResponse.json(
+        { success: false, error: 'Valid confidence score is required' },
         { status: 400 }
       );
     }
@@ -123,7 +152,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating escalation:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create escalation' },
+      { success: false, error: process.env.NODE_ENV === 'production' ? 'Failed to create escalation' : 'Failed to create escalation' },
       { status: 500 }
     );
   }

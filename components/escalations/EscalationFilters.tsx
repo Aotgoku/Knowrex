@@ -1,6 +1,7 @@
 'use client';
 
-import { EscalationStatus, EscalationUrgency, ESCALATION_CATEGORIES } from '@/types/escalation';
+import { ESCALATION_CATEGORIES } from '@/types/escalation';
+import { Search, RotateCcw, Filter } from 'lucide-react';
 
 interface EscalationFiltersProps {
   status: string;
@@ -25,67 +26,64 @@ export default function EscalationFilters({
   onSearchChange,
   onReset
 }: EscalationFiltersProps) {
-  const hasFilters = status || urgency || category || search;
+  const hasFilters = Boolean(status || urgency || category || search);
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm">
-      <div className="flex flex-wrap gap-4 items-end">
+    <div className="glass-panel p-3.5 sm:p-4 rounded-xl border border-border bg-card/60">
+      <div className="flex flex-wrap gap-3 items-center">
         {/* Search */}
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-xs text-gray-500 mb-1">Search</label>
+        <div className="flex-1 min-w-[220px] relative">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search questions..."
-            className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search questions or ticket summaries..."
+            className="w-full pl-9 pr-3 py-2 bg-black/20 border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500/50 transition-all"
           />
         </div>
 
         {/* Status Filter */}
-        <div className="w-40">
-          <label className="block text-xs text-gray-500 mb-1">Status</label>
+        <div className="w-36">
           <select
             value={status}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-black/20 border border-border rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
           >
-            <option value="">All Statuses</option>
-            <option value="pending">⏳ Pending</option>
-            <option value="assigned">👤 Assigned</option>
-            <option value="in_progress">🔄 In Progress</option>
-            <option value="resolved">✅ Resolved</option>
-            <option value="rejected">❌ Rejected</option>
+            <option value="" className="bg-neutral-900 text-foreground">All Statuses</option>
+            <option value="pending" className="bg-neutral-900 text-foreground">Pending</option>
+            <option value="assigned" className="bg-neutral-900 text-foreground">Assigned</option>
+            <option value="in_progress" className="bg-neutral-900 text-foreground">In Progress</option>
+            <option value="resolved" className="bg-neutral-900 text-foreground">Resolved</option>
+            <option value="rejected" className="bg-neutral-900 text-foreground">Rejected</option>
           </select>
         </div>
 
         {/* Urgency Filter */}
-        <div className="w-36">
-          <label className="block text-xs text-gray-500 mb-1">Urgency</label>
+        <div className="w-32">
           <select
             value={urgency}
             onChange={(e) => onUrgencyChange(e.target.value)}
-            className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-black/20 border border-border rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
           >
-            <option value="">All Urgencies</option>
-            <option value="critical">🔴 Critical</option>
-            <option value="high">🟠 High</option>
-            <option value="medium">🟡 Medium</option>
-            <option value="low">🟢 Low</option>
+            <option value="" className="bg-neutral-900 text-foreground">All Urgencies</option>
+            <option value="critical" className="bg-neutral-900 text-foreground">Critical</option>
+            <option value="high" className="bg-neutral-900 text-foreground">High</option>
+            <option value="medium" className="bg-neutral-900 text-foreground">Medium</option>
+            <option value="low" className="bg-neutral-900 text-foreground">Low</option>
           </select>
         </div>
 
         {/* Category Filter */}
-        <div className="w-44">
-          <label className="block text-xs text-gray-500 mb-1">Category</label>
+        <div className="w-40">
           <select
             value={category}
             onChange={(e) => onCategoryChange(e.target.value)}
-            className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-black/20 border border-border rounded-xl text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
           >
-            <option value="">All Categories</option>
+            <option value="" className="bg-neutral-900 text-foreground">All Categories</option>
             {ESCALATION_CATEGORIES.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat} value={cat} className="bg-neutral-900 text-foreground">{cat}</option>
             ))}
           </select>
         </div>
@@ -94,9 +92,10 @@ export default function EscalationFilters({
         {hasFilters && (
           <button
             onClick={onReset}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border rounded hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono text-muted-foreground hover:text-foreground border border-border bg-white/5 hover:bg-white/10 transition-all cursor-pointer"
           >
-            Reset
+            <RotateCcw className="w-3 h-3" />
+            <span>Reset</span>
           </button>
         )}
       </div>

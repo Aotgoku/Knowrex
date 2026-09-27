@@ -30,7 +30,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, conversations: conversations || [] });
   } catch (error: any) {
     console.error('[API Conversations] GET Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({
+      success: false,
+      error: process.env.NODE_ENV === 'production' ? 'Failed to fetch conversations' : (error?.message || 'Database error')
+    }, { status: 500 });
   }
 }
 
@@ -54,8 +57,12 @@ export async function POST(request: NextRequest) {
 
     // Action 2: Save a single message to an existing conversation
     if (action === 'save_message') {
-      if (!conversationId || !message) {
-        return NextResponse.json({ success: false, error: 'Missing conversationId or message' }, { status: 400 });
+      if (!conversationId || !message || typeof message.content !== 'string') {
+        return NextResponse.json({ success: false, error: 'Missing or invalid conversationId or message' }, { status: 400 });
+      }
+
+      if (message.content.length > 10000) {
+        return NextResponse.json({ success: false, error: 'Message content exceeds maximum allowed length' }, { status: 400 });
       }
 
       const { data, error } = await supabase
@@ -87,6 +94,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
     console.error('[API Conversations] POST Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({
+      success: false,
+      error: process.env.NODE_ENV === 'production' ? 'Failed to process conversation update' : (error?.message || 'Database error')
+    }, { status: 500 });
   }
 }

@@ -1,10 +1,9 @@
 // ============================================
 // Vector Search System
-// Combines local embeddings + File-based Vector Store for semantic search
-// 100% FREE - no API calls
+// Gemini text-embedding-004 + Pinecone Cloud
 // ============================================
 
-import { generateEmbedding, generateEmbeddings, EMBEDDING_CONFIG, EmbeddingProgressCallback } from './embeddings';
+import { generateEmbedding, generateQueryEmbedding, generateEmbeddings, EMBEDDING_CONFIG, EmbeddingProgressCallback } from './embeddings';
 import { addVectors, queryVectors, deleteVectorsByDocument, VectorMetadata, getDocumentVectorCount } from './vectorStore';
 import { ProcessedDocument, DocumentChunk } from '@/types/document';
 
@@ -170,12 +169,12 @@ export async function searchVectors(
   }
   
   try {
-    // Generate query embedding locally
-    console.log('[VectorSearch] Embedding query...');
-    const queryEmbedding = await generateEmbedding(query);
+    // Generate query embedding via Gemini (RETRIEVAL_QUERY task for better recall)
+    console.log('[VectorSearch] Embedding query via Gemini...');
+    const queryEmbedding = await generateQueryEmbedding(query);
     
-    // Search ChromaDB
-    console.log('[VectorSearch] Searching vectors...');
+    // Search Pinecone
+    console.log('[VectorSearch] Searching Pinecone vectors...');
     const results = await queryVectors(queryEmbedding, topK, filter);
     
     // Transform results
@@ -237,7 +236,7 @@ export function getEmbeddingModelInfo() {
   return {
     model: EMBEDDING_CONFIG.model,
     dimensions: EMBEDDING_CONFIG.dimensions,
-    type: 'local',
-    cost: 'FREE'
+    type: 'gemini-api',
+    cost: 'FREE_TIER'
   };
 }

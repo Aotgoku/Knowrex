@@ -3,16 +3,26 @@
 // Get all documents and statistics
 // ============================================
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { listDocuments, getDocumentStats } from '@/lib/fileUtils';
 import { DocumentListResponse } from '@/types/document';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 /**
  * GET /api/documents
- * Returns all documents with statistics
+ * Returns all documents with statistics (Admin / Agent only)
  */
-export async function GET(): Promise<NextResponse<DocumentListResponse>> {
+export async function GET(request: NextRequest): Promise<NextResponse<DocumentListResponse | { success: boolean; error: string }>> {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Authentication required to view documents.'
+      }, { status: 401 }) as any;
+    }
     const [documents, stats] = await Promise.all([
       listDocuments(),
       getDocumentStats()

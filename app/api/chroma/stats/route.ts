@@ -4,9 +4,10 @@
 // Returns local vector database statistics
 // ============================================
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getCollectionStats, isStorageAvailable } from '@/lib/vectorStore';
 import { getEmbeddingModelInfo } from '@/lib/vectorSearch';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 export interface ChromaStatsResponse {
   success: boolean;
@@ -24,10 +25,24 @@ export interface ChromaStatsResponse {
 
 /**
  * GET /api/chroma/stats
- * Get ChromaDB statistics
+ * Get ChromaDB statistics (Admin / Agent Only)
  */
-export async function GET(): Promise<NextResponse<ChromaStatsResponse>> {
+export async function GET(request: NextRequest): Promise<NextResponse<ChromaStatsResponse>> {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        available: false,
+        totalVectors: 0,
+        collectionName: '',
+        embeddingModel: getEmbeddingModelInfo(),
+        error: 'Unauthorized: Authentication required.'
+      }, { status: 401 });
+    }
+
     const available = await isStorageAvailable();
     
     if (!available) {

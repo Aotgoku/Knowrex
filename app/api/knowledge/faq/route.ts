@@ -16,6 +16,7 @@ import { FAQEntry } from '@/types/escalation';
 import { v4 as uuidv4 } from 'uuid';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 const FAQ_DIR = path.join(process.cwd(), 'data', 'faq');
 
@@ -59,10 +60,20 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/knowledge/faq
- * Create a new FAQ entry
+ * Create a new FAQ entry (Admin / Agent Only)
  */
 export async function POST(request: NextRequest) {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Authentication required to create or publish knowledge base FAQs.'
+      }, { status: 401 });
+    }
+
     const body = await request.json();
 
     // If creating from escalation

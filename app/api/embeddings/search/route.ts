@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { searchVectors, SearchResult } from '@/lib/vectorSearch';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 export interface SearchRequest {
   query: string;
@@ -23,12 +24,24 @@ export interface SearchResponse {
 
 /**
  * POST /api/embeddings/search
- * Perform semantic search on local vector database
+ * Perform semantic search on local vector database (Admin / Agent Only)
  */
 export async function POST(request: NextRequest): Promise<NextResponse<SearchResponse>> {
   const startTime = Date.now();
   
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        results: [],
+        query: '',
+        error: 'Unauthorized: Authentication required to execute raw vector searches.'
+      }, { status: 401 });
+    }
+
     const body: SearchRequest = await request.json();
     const { query, topK = 5, documentId } = body;
     
@@ -66,7 +79,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
       success: false,
       results: [],
       query: '',
-      error: error instanceof Error ? error.message : 'Search failed'
+      error: process.env.NODE_ENV === 'production' ? 'Search failed' : (error instanceof Error ? error.message : 'Search failed')
     }, { status: 500 });
   }
 }

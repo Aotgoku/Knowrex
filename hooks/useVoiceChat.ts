@@ -68,15 +68,6 @@ export function useVoiceChat(): UseVoiceChatReturn {
 
     if (SpeechRecognition) {
       setIsSupported(true);
-      try {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        recognitionRef.current = recognition;
-      } catch (err) {
-        console.warn('[Voice AI] SpeechRecognition init failed:', err);
-      }
     }
 
     // 2. Check Speech Synthesis
@@ -93,48 +84,46 @@ export function useVoiceChat(): UseVoiceChatReturn {
 
   /**
    * Start microphone capture with live transcription
-   * Production Best Practice:
-   * 1. Proactively triggers browser microphone permission prompt via getUserMedia
-   * 2. Releases the stream immediately so SpeechRecognition can bind hardware
-   * 3. Handles 'not-allowed' error gracefully with permissionDenied state
+   * Instantiates a fresh SpeechRecognition session each time to prevent
+   * InvalidStateError and microphone driver race conditions.
    */
   const startListening = useCallback(
     async (onInterim: (text: string) => void, onFinal?: (text: string) => void) => {
-      if (!recognitionRef.current) {
+      if (typeof window === 'undefined') return;
+
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
         alert('Voice speech recognition is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari.');
         return;
       }
 
-      // If already speaking, cancel TTS before listening
+      // If already speaking, stop TTS before listening
       if (synthRef.current && synthRef.current.speaking) {
         synthRef.current.cancel();
         setIsSpeaking(false);
       }
 
-      setPermissionDenied(false);
-
-      // Proactively prompt user for microphone permission if supported
-      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+      // Stop any existing recognition instance cleanly
+      if (recognitionRef.current) {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          // Stop audio tracks immediately to release hardware lock so SpeechRecognition can access mic
-          stream.getTracks().forEach((track) => track.stop());
-        } catch (mediaErr: any) {
-          console.warn('[Voice AI] Microphone permission prompt result:', mediaErr);
-          if (
-            mediaErr.name === 'NotAllowedError' || 
-            mediaErr.name === 'PermissionDeniedError' ||
-            mediaErr.message?.includes('Permission denied')
-          ) {
-            setPermissionDenied(true);
-            return;
-          }
+          recognitionRef.current.abort();
+        } catch {
+          // ignore
         }
+        recognitionRef.current = null;
       }
 
+      setPermissionDenied(false);
+
       try {
-        const recognition = recognitionRef.current;
-        let finalAccumulated = '';
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = typeof navigator !== 'undefined' ? (navigator.language || 'en-US') : 'en-US';
+
+        let accumulated = '';
 
         recognition.onstart = () => {
           setIsListening(true);
@@ -146,14 +135,16 @@ export function useVoiceChat(): UseVoiceChatReturn {
           for (let i = event.resultIndex; i < event.results.length; ++i) {
             const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-              finalAccumulated += transcript + ' ';
+              accumulated += transcript + ' ';
             } else {
               interimTranscript += transcript;
             }
           }
 
-          const currentText = (finalAccumulated + interimTranscript).trim();
-          onInterim(currentText);
+          const currentText = (accumulated + interimTranscript).trim();
+          if (currentText) {
+            onInterim(currentText);
+          }
         };
 
         recognition.onerror = (event: any) => {
@@ -166,11 +157,13 @@ export function useVoiceChat(): UseVoiceChatReturn {
 
         recognition.onend = () => {
           setIsListening(false);
-          if (finalAccumulated.trim() && onFinal) {
-            onFinal(finalAccumulated.trim());
+          const finalText = accumulated.trim();
+          if (finalText && onFinal) {
+            onFinal(finalText);
           }
         };
 
+        recognitionRef.current = recognition;
         recognition.start();
       } catch (err: any) {
         console.warn('[Voice AI] Failed to start recognition:', err);

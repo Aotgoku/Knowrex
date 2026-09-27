@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadDocument, updateDocumentVectorStatus } from '@/lib/fileUtils';
 import { syncDocumentToVectorDB } from '@/lib/vectorSearch';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 export interface SyncRequest {
   documentId: string;
@@ -21,12 +22,24 @@ export interface SyncResponse {
 
 /**
  * POST /api/embeddings/sync
- * Sync a document to the local vector database
+ * Sync a document to the local vector database (Admin Only)
  */
 export async function POST(request: NextRequest): Promise<NextResponse<SyncResponse>> {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json({
+        success: false,
+        message: 'Unauthorized: Only Super Admins can trigger vector database synchronization.',
+        error: 'Unauthorized'
+      }, { status: 401 });
+    }
+
     const body: SyncRequest = await request.json();
     const { documentId } = body;
+
     
     if (!documentId) {
       return NextResponse.json({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AUTH_COOKIE_NAME, DEMO_USERS, serializeSession, deserializeSession, AuthUser } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/cache';
 
 /**
  * GET /api/auth
@@ -28,8 +29,19 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate Limiting: 10 login attempts per minute per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'anonymous';
+    const rateCheck = await checkRateLimit(`auth:${ip}`, 10, 60);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { success: false, error: `Too many login attempts. Please wait ${rateCheck.resetInSeconds}s.` },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const { role, email } = body;
+
 
     let user: AuthUser | null = null;
 
@@ -64,7 +76,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set({
       name: AUTH_COOKIE_NAME,
       value: token,
-      httpOnly: false, // allow client-side hydration alongside server cookies
+      httpOnly: true, // Prevent JS from reading the session cookie (XSS protection)
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',

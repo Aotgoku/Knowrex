@@ -5,6 +5,7 @@ import { generateEmbeddings } from '@/lib/embeddings';
 import { addVectors } from '@/lib/vectorStore';
 import { saveDocument, formatFileSize } from '@/lib/fileUtils';
 import { ProcessedDocument, DocumentChunk } from '@/types/document';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 let genAI: GoogleGenerativeAI | null = null;
 function getGeminiClient() {
@@ -17,9 +18,20 @@ function getGeminiClient() {
 /**
  * POST /api/analytics/knowledge-gaps/generate-doc
  * Synthesizes a corporate policy doc using Gemini and indexes vectors into Pinecone Cloud.
+ * (Super Admin Only)
  */
 export async function POST(request: NextRequest) {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Only Super Admins can synthesize documents and write to vector store.'
+      }, { status: 401 });
+    }
+
     const body = await request.json();
     const { topic, category, sampleQuestions } = body;
 
@@ -38,9 +50,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Synthesize document using Gemini 2.5 Flash
+    // 1. Synthesize document using Gemini 3.5 Flash
     const model = client.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       generationConfig: {
         temperature: 0.3,
         maxOutputTokens: 3000
@@ -167,7 +179,7 @@ Write clean, professional Markdown. Do NOT wrap in meta-commentary like "Here is
   } catch (error: any) {
     console.error('[AutoDoc] Generation & Indexing Error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to generate document' },
+      { success: false, error: process.env.NODE_ENV === 'production' ? 'Failed to generate document' : (error?.message || 'Failed to generate document') },
       { status: 500 }
     );
   }

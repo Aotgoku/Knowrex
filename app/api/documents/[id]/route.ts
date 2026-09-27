@@ -23,6 +23,16 @@ export async function GET(
   { params }: RouteParams
 ): Promise<NextResponse<DocumentDetailResponse>> {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Authentication required to view document details.'
+      }, { status: 401 });
+    }
+
     const { id } = await params;
     const document = await loadDocument(id);
     
@@ -43,7 +53,7 @@ export async function GET(
     
     return NextResponse.json({
       success: false,
-      error: 'Failed to fetch document'
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : 'Failed to fetch document'
     }, { status: 500 });
   }
 }
@@ -61,13 +71,14 @@ export async function DELETE(
     const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
     const user = deserializeSession(sessionCookie);
 
-    if (user && user.role !== 'admin') {
+    if (!user || user.role !== 'admin') {
       return NextResponse.json({
         success: false,
-        message: 'Permission denied: Only Super Admins can delete documents.',
-        error: 'Forbidden'
-      }, { status: 403 });
+        message: 'Unauthorized: Only Super Admins can delete documents.',
+        error: 'Unauthorized'
+      }, { status: 401 });
     }
+
 
     const { id } = await params;
     
@@ -101,20 +112,30 @@ export async function DELETE(
     return NextResponse.json({
       success: false,
       message: 'Failed to delete document',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : (error instanceof Error ? error.message : 'Unknown error')
     }, { status: 500 });
   }
 }
 
 /**
  * POST /api/documents/[id]
- * Reprocess a document (for retrying failed documents)
+ * Reprocess a document (Admin / Agent Only)
  */
 export async function POST(
   request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse<DocumentDetailResponse>> {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Unauthorized: Authentication required to reprocess documents.'
+      }, { status: 401 });
+    }
+
     const { id } = await params;
     const document = await reprocessDocument(id);
     
@@ -135,7 +156,7 @@ export async function POST(
     
     return NextResponse.json({
       success: false,
-      error: 'Failed to reprocess document'
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : 'Failed to reprocess document'
     }, { status: 500 });
   }
 }

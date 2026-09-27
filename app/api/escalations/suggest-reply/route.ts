@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { performRAG, cleanDocumentText } from '@/lib/ragSystem';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 // Initialize Gemini
 let genAI: GoogleGenerativeAI | null = null;
@@ -18,7 +19,18 @@ function getGeminiClient() {
  */
 export async function POST(request: NextRequest) {
   try {
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Operational credentials required.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
+
     const { question, attemptedAnswer, triggerReason, urgency } = body;
 
     if (!question || typeof question !== 'string') {
@@ -55,9 +67,9 @@ export async function POST(request: NextRequest) {
       console.warn('[Copilot API] RAG retrieval warning:', ragErr);
     }
 
-    // 2. Query Gemini 2.5 Flash with Copilot instructions
+    // 2. Query Gemini 3.5 Flash with Copilot instructions
     const model = client.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       generationConfig: {
         temperature: 0.4,
         maxOutputTokens: 2048,

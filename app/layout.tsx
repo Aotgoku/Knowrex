@@ -32,6 +32,11 @@ export const metadata: Metadata = {
     description: "Enterprise-grade AI customer support engine with Pinecone Cloud RAG and AI Guardrails",
     type: "website",
   },
+  icons: {
+    icon: "/knowrex-icon.png",
+    shortcut: "/knowrex-icon.png",
+    apple: "/knowrex-icon.png",
+  },
 };
 
 // ============================================
@@ -51,6 +56,26 @@ export default function RootLayout({
         <link 
           href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" 
           rel="stylesheet" 
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('knowrex-dark-mode');
+                  if (saved === 'false') {
+                    document.documentElement.classList.remove('dark');
+                  } else if (saved === 'true') {
+                    document.documentElement.classList.add('dark');
+                  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
         />
       </head>
       <body

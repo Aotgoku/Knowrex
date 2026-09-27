@@ -1,8 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
-import { Escalation, EscalationStatus, EscalationUrgency, ESCALATION_CATEGORIES } from '@/types/escalation';
+import { 
+  Sparkles, 
+  Loader2, 
+  CheckCircle2, 
+  HelpCircle, 
+  Bot, 
+  BarChart2, 
+  FileText, 
+  Zap, 
+  Edit3, 
+  XCircle, 
+  X,
+  Clock,
+  UserCheck,
+  Send
+} from 'lucide-react';
+import { Escalation, ESCALATION_CATEGORIES } from '@/types/escalation';
 
 interface EscalationDetailProps {
   escalation: Escalation;
@@ -60,61 +75,29 @@ export default function EscalationDetail({
           urgency: escalation.urgency
         })
       });
+
       const data = await res.json();
-      if (data.success && data.suggestedAnswer) {
-        setHumanAnswer(data.suggestedAnswer);
-        if (data.category && !category) {
-          setCategory(data.category);
-        }
-        if (data.tags && data.tags.length > 0 && !tags) {
-          setTags(data.tags.join(', '));
-        }
-        if (data.internalNote && !resolutionNotes) {
-          setResolutionNotes(data.internalNote);
-        }
-        if (!resolvedBy) {
-          setResolvedBy('Alex Rivera (Support Agent)');
-        }
-        setAiGenerated(true);
-        setAiSourcesCount(data.sourcesUsed?.length || 0);
-      } else {
-        alert(data.error || 'Failed to generate AI suggestion');
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to auto-draft resolution');
       }
-    } catch (err) {
-      console.error('Error suggesting reply:', err);
-      alert('Failed to connect to AI Copilot service');
+
+      setHumanAnswer(data.suggestedReply);
+      setAiGenerated(true);
+      setAiSourcesCount(data.sourcesUsed || null);
+    } catch (err: any) {
+      alert(err.message || 'Error drafting AI reply');
     } finally {
       setIsGeneratingAiReply(false);
     }
   };
 
-  const getUrgencyColor = (urgency: EscalationUrgency) => {
-    switch (urgency) {
-      case 'critical': return 'bg-red-100 text-red-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-    }
-  };
-
-  const getStatusColor = (status: EscalationStatus) => {
-    switch (status) {
-      case 'pending': return 'bg-gray-100 text-gray-800';
-      case 'assigned': return 'bg-blue-100 text-blue-800';
-      case 'in_progress': return 'bg-yellow-100 text-yellow-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-    }
-  };
-
-  const formatDate = (date: Date | string) => {
-    const d = new Date(date);
-    return d.toLocaleString();
-  };
-
   const handleResolve = async () => {
-    if (!humanAnswer.trim() || !resolvedBy.trim()) {
-      alert('Please provide an answer and your name');
+    if (!humanAnswer.trim()) {
+      alert('Please provide an answer');
+      return;
+    }
+    if (!resolvedBy.trim()) {
+      alert('Please enter your name');
       return;
     }
 
@@ -149,98 +132,123 @@ export default function EscalationDetail({
 
   const canResolve = escalation.status !== 'resolved' && escalation.status !== 'rejected';
 
+  const getUrgencyBadge = (urgency: string) => {
+    switch (urgency) {
+      case 'critical': return 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30';
+      case 'high': return 'text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/30';
+      case 'medium': return 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/30';
+      case 'low': return 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+      default: return 'text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-white/5 border-zinc-200 dark:border-white/10';
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/70 dark:bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
+      <div className="bg-white dark:bg-[#0c0d12] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col transition-colors">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-white/10 bg-zinc-50/80 dark:bg-neutral-900/40">
           <div className="flex items-start justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className={`px-2 py-1 rounded text-sm font-medium ${getUrgencyColor(escalation.urgency)}`}>
-                  {escalation.urgency.toUpperCase()}
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase border ${getUrgencyBadge(escalation.urgency)}`}>
+                  {escalation.urgency}
                 </span>
-                <span className={`px-2 py-1 rounded text-sm ${getStatusColor(escalation.status)}`}>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-white/5 text-zinc-700 dark:text-zinc-300">
                   {escalation.status.replace('_', ' ')}
                 </span>
-                <span className="text-sm text-gray-500">
+                <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
                   ID: {escalation.id.substring(0, 8)}...
                 </span>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">Escalation Details</h2>
+              <h2 className="text-lg font-instrument font-semibold text-zinc-900 dark:text-white">
+                Escalation Incident Telemetry
+              </h2>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
+              className="p-1.5 rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-white/5 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-white/10 transition-all cursor-pointer"
             >
-              ×
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Left Column - Question & Context */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* User Question */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  ❓ User Question
+              <div className="p-4 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.03]">
+                <h3 className="text-xs font-mono uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-1.5 font-bold">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  User Query
                 </h3>
-                <p className="text-gray-900">{escalation.userQuestion}</p>
+                <p className="text-sm text-zinc-900 dark:text-zinc-100 font-medium leading-relaxed">
+                  {escalation.userQuestion}
+                </p>
               </div>
 
               {/* AI Attempted Answer */}
               {escalation.attemptedAnswer && (
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h3 className="font-medium text-blue-700 mb-2 flex items-center gap-2">
-                    🤖 AI Attempted Answer
+                <div className="p-4 rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/70 dark:bg-indigo-500/5">
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-1.5 font-bold">
+                    <Bot className="w-3.5 h-3.5" />
+                    AI Attempted Answer
                   </h3>
-                  <p className="text-gray-700 text-sm whitespace-pre-wrap">
+                  <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">
                     {escalation.attemptedAnswer}
                   </p>
                 </div>
               )}
 
-              {/* Metrics */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-700 mb-3">📊 Confidence Metrics</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Confidence Score</span>
-                    <div className="font-medium text-lg">
+              {/* Confidence Metrics */}
+              <div className="p-4 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.03]">
+                <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-3 flex items-center gap-1.5 font-bold">
+                  <BarChart2 className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+                  Retrieval Confidence
+                </h3>
+                <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10">
+                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400">Confidence</span>
+                    <div className="font-bold text-base text-zinc-900 dark:text-white mt-0.5">
                       {Math.round(escalation.confidenceScore * 100)}%
                     </div>
                   </div>
-                  <div>
-                    <span className="text-gray-500">Top Match Score</span>
-                    <div className="font-medium text-lg">
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10">
+                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400">Top Vector Score</span>
+                    <div className="font-bold text-base text-zinc-900 dark:text-white mt-0.5">
                       {Math.round(escalation.topMatchScore * 100)}%
                     </div>
                   </div>
-                  <div>
-                    <span className="text-gray-500">Documents Searched</span>
-                    <div className="font-medium text-lg">{escalation.documentsSearched}</div>
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10">
+                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400">Docs Scanned</span>
+                    <div className="font-bold text-base text-zinc-900 dark:text-white mt-0.5">{escalation.documentsSearched}</div>
                   </div>
-                  <div>
-                    <span className="text-gray-500">Sources Found</span>
-                    <div className="font-medium text-lg">{escalation.sourcesFound.length}</div>
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10">
+                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400">Sources Matched</span>
+                    <div className="font-bold text-base text-zinc-900 dark:text-white mt-0.5">{escalation.sourcesFound.length}</div>
                   </div>
                 </div>
               </div>
 
               {/* Sources Found */}
               {escalation.sourcesFound.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-medium text-gray-700 mb-3">📄 Sources Found</h3>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                <div className="p-4 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.03]">
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-3 flex items-center gap-1.5 font-bold">
+                    <FileText className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+                    Referenced Sources
+                  </h3>
+                  <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                     {escalation.sourcesFound.map((source, idx) => (
-                      <div key={idx} className="text-sm p-2 bg-white rounded border border-gray-200">
-                        <div className="font-medium text-gray-700">
-                          {source.documentName} ({Math.round(source.score * 100)}%)
+                      <div key={idx} className="text-xs p-2.5 bg-white dark:bg-white/5 rounded-lg border border-zinc-200 dark:border-white/10">
+                        <div className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center justify-between">
+                          <span className="truncate">{source.documentName}</span>
+                          <span className="font-mono text-indigo-600 dark:text-indigo-400 text-[10px] shrink-0 ml-2 font-bold">
+                            {Math.round(source.score * 100)}%
+                          </span>
                         </div>
-                        <p className="text-gray-500 text-xs mt-1 line-clamp-2">
+                        <p className="text-zinc-600 dark:text-zinc-400 text-[11px] mt-1 line-clamp-2">
                           {source.text}
                         </p>
                       </div>
@@ -250,24 +258,26 @@ export default function EscalationDetail({
               )}
 
               {/* Metadata */}
-              <div className="text-sm text-gray-500 space-y-1">
-                <div>Escalation Reason: <span className="font-medium">{escalation.reason.replace('_', ' ')}</span></div>
-                <div>Created: <span className="font-medium">{formatDate(escalation.createdAt)}</span></div>
+              <div className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 space-y-1 px-1">
+                <div>Trigger Reason: <span className="text-zinc-800 dark:text-zinc-200 font-medium">{escalation.reason.replace('_', ' ')}</span></div>
                 {escalation.assignedTo && (
-                  <div>Assigned to: <span className="font-medium">{escalation.assignedTo}</span></div>
+                  <div>Assigned To: <span className="text-blue-600 dark:text-blue-400 font-medium">{escalation.assignedTo}</span></div>
                 )}
                 {escalation.resolvedBy && (
-                  <div>Resolved by: <span className="font-medium">{escalation.resolvedBy}</span></div>
+                  <div>Resolved By: <span className="text-emerald-600 dark:text-emerald-400 font-medium">{escalation.resolvedBy}</span></div>
                 )}
               </div>
             </div>
 
             {/* Right Column - Actions & Response */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Quick Actions */}
               {canResolve && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="font-medium text-gray-700 mb-3">⚡ Quick Actions</h3>
+                <div className="p-4 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.03]">
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-3 flex items-center gap-1.5 font-bold">
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    Desk Dispatch
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {escalation.status === 'pending' && (
                       <>
@@ -276,13 +286,13 @@ export default function EscalationDetail({
                             type="text"
                             value={assignTo}
                             onChange={(e) => setAssignTo(e.target.value)}
-                            placeholder="Assign to..."
-                            className="flex-1 px-3 py-2 border rounded text-sm"
+                            placeholder="Assign agent name..."
+                            className="flex-1 px-3 py-1.5 bg-white dark:bg-black/30 border border-zinc-300 dark:border-white/15 rounded-xl text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           />
                           <button
                             onClick={handleAssign}
                             disabled={isLoading}
-                            className="px-4 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:opacity-50"
+                            className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold disabled:opacity-50 cursor-pointer transition-colors"
                           >
                             Assign
                           </button>
@@ -290,7 +300,7 @@ export default function EscalationDetail({
                         <button
                           onClick={onStart}
                           disabled={isLoading}
-                          className="px-4 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 disabled:opacity-50"
+                          className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl text-xs font-medium cursor-pointer transition-colors"
                         >
                           Start Working
                         </button>
@@ -300,7 +310,7 @@ export default function EscalationDetail({
                       <button
                         onClick={onStart}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl text-xs font-medium cursor-pointer transition-colors"
                       >
                         Start Working
                       </button>
@@ -308,7 +318,7 @@ export default function EscalationDetail({
                     <button
                       onClick={() => setShowRejectModal(true)}
                       disabled={isLoading}
-                      className="px-4 py-2 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200 disabled:opacity-50"
+                      className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-xl text-xs font-medium cursor-pointer transition-colors"
                     >
                       Reject
                     </button>
@@ -318,40 +328,42 @@ export default function EscalationDetail({
 
               {/* Human Answer Form */}
               {canResolve && (
-                <div className="bg-green-50 rounded-lg p-4">
-                  <h3 className="font-medium text-green-700 mb-3">✍️ Provide Human Answer</h3>
+                <div className="p-4 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.03]">
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-3 flex items-center gap-1.5 font-bold">
+                    <Edit3 className="w-3.5 h-3.5" />
+                    Expert Resolution
+                  </h3>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
-                      <label className="block text-sm text-gray-600 mb-1">Your Name *</label>
+                      <label className="block text-[11px] font-mono text-zinc-600 dark:text-zinc-400 mb-1 font-medium">Agent Name *</label>
                       <input
                         type="text"
                         value={resolvedBy}
                         onChange={(e) => setResolvedBy(e.target.value)}
-                        placeholder="Enter your name"
-                        className="w-full px-3 py-2 border rounded"
+                        placeholder="e.g. Sarah Connor"
+                        className="w-full px-3 py-1.5 bg-white dark:bg-black/30 border border-zinc-300 dark:border-white/15 rounded-xl text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="block text-sm font-semibold text-gray-800">Answer *</label>
+                        <label className="block text-[11px] font-mono text-zinc-600 dark:text-zinc-400 font-medium">Verified Answer *</label>
                         <button
                           type="button"
                           onClick={handleAiSuggestReply}
                           disabled={isGeneratingAiReply || isLoading}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 active:scale-95 border border-purple-200 rounded-full transition-all shadow-sm disabled:opacity-50"
-                          title="Draft resolution with Gemini Copilot based on knowledge base"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/20 rounded-full transition-all cursor-pointer disabled:opacity-50"
                         >
                           {isGeneratingAiReply ? (
                             <>
-                              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600" />
-                              <span>Drafting resolution...</span>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <span>Drafting...</span>
                             </>
                           ) : (
                             <>
-                              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                              <span>✨ AI Suggest Reply</span>
+                              <Sparkles className="w-3 h-3" />
+                              <span>AI Suggest Reply</span>
                             </>
                           )}
                         </button>
@@ -362,118 +374,154 @@ export default function EscalationDetail({
                           setHumanAnswer(e.target.value);
                           if (aiGenerated) setAiGenerated(false);
                         }}
-                        placeholder="Type your resolution answer here, or click '✨ AI Suggest Reply' above to auto-draft from knowledge base..."
-                        rows={6}
-                        className="w-full px-3 py-2 border rounded resize-none focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                      />
-                      {aiGenerated && (
-                        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded border border-emerald-200">
-                          <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
-                          <span>
-                            Draft populated with Gemini AI Copilot {aiSourcesCount ? `(${aiSourcesCount} Pinecone vector sources referenced)` : ''}. Review or edit before resolving.
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">Category</label>
-                      <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="w-full px-3 py-2 border rounded"
-                      >
-                        <option value="">Select category...</option>
-                        {ESCALATION_CATEGORIES.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">Tags (comma-separated)</label>
-                      <input
-                        type="text"
-                        value={tags}
-                        onChange={(e) => setTags(e.target.value)}
-                        placeholder="e.g., billing, refund, policy"
-                        className="w-full px-3 py-2 border rounded"
+                        placeholder="Provide verified resolution..."
+                        rows={5}
+                        className="w-full px-3 py-2 bg-white dark:bg-black/30 border border-zinc-300 dark:border-white/15 rounded-xl text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">Internal Notes</label>
-                      <textarea
-                        value={resolutionNotes}
-                        onChange={(e) => setResolutionNotes(e.target.value)}
-                        placeholder="Optional notes for future reference..."
-                        rows={2}
-                        className="w-full px-3 py-2 border rounded resize-none"
-                      />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-mono text-zinc-600 dark:text-zinc-400 mb-1 font-medium">Category</label>
+                        <select
+                          value={category}
+                          onChange={(e) => setCategory(e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-white dark:bg-neutral-900 border border-zinc-300 dark:border-white/15 rounded-xl text-xs text-zinc-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                        >
+                          <option value="">Select...</option>
+                          {ESCALATION_CATEGORIES.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-mono text-zinc-600 dark:text-zinc-400 mb-1 font-medium">Tags</label>
+                        <input
+                          type="text"
+                          value={tags}
+                          onChange={(e) => setTags(e.target.value)}
+                          placeholder="billing, refund"
+                          className="w-full px-3 py-1.5 bg-white dark:bg-black/30 border border-zinc-300 dark:border-white/15 rounded-xl text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
                     </div>
 
-                    {/* KB Integration Options */}
-                    <div className="border-t border-green-200 pt-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
+                    {/* Pinecone KB Integration */}
+                    <div className="border-t border-zinc-200 dark:border-white/10 pt-3">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-800 dark:text-zinc-200">
                         <input
                           type="checkbox"
                           checked={addToKB}
                           onChange={(e) => setAddToKB(e.target.checked)}
-                          className="w-4 h-4"
+                          className="rounded border-zinc-300 accent-indigo-600"
                         />
-                        <span className="text-sm font-medium">Add to Knowledge Base</span>
+                        <span>Sync verified answer back into Pinecone vector index</span>
                       </label>
-
-                      {addToKB && (
-                        <div className="mt-3 ml-6">
-                          <label className="block text-sm text-gray-600 mb-1">Integration Type</label>
-                          <select
-                            value={kbIntegrationType}
-                            onChange={(e) => setKbIntegrationType(e.target.value)}
-                            className="w-full px-3 py-2 border rounded text-sm"
-                          >
-                            <option value="faq">Create as FAQ</option>
-                            <option value="doc_update">Update existing document</option>
-                            <option value="verified">Mark as verified (no KB addition)</option>
-                          </select>
-                        </div>
-                      )}
                     </div>
 
                     <button
                       onClick={handleResolve}
                       disabled={isLoading || !humanAnswer.trim() || !resolvedBy.trim()}
-                      className="w-full px-4 py-3 bg-green-600 text-white rounded font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-500/20 hover:opacity-95 transition-opacity disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      {isLoading ? 'Resolving...' : '✅ Resolve Escalation'}
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{isLoading ? 'Resolving Incident...' : 'Resolve & Update Knowledge Base'}</span>
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Already Resolved */}
-              {escalation.status === 'resolved' && escalation.humanAnswer && (
-                <div className="bg-green-50 rounded-lg p-4">
-                  <h3 className="font-medium text-green-700 mb-3">✅ Human Answer (Resolved)</h3>
-                  <p className="text-gray-700 whitespace-pre-wrap">{escalation.humanAnswer}</p>
-                  {escalation.resolutionNotes && (
-                    <div className="mt-3 text-sm text-gray-500 border-t border-green-200 pt-3">
-                      <strong>Notes:</strong> {escalation.resolutionNotes}
+              {/* Already Resolved State */}
+              {escalation.status === 'resolved' && (
+                <div className="space-y-4">
+                  {/* Verified Solution Card */}
+                  <div className="p-4 sm:p-5 rounded-xl border border-emerald-300 dark:border-emerald-500/30 bg-emerald-50/80 dark:bg-emerald-500/10 shadow-sm">
+                    <div className="flex items-center justify-between mb-2.5 flex-wrap gap-2">
+                      <h3 className="text-xs font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        Verified Solution
+                      </h3>
+                      {escalation.resolvedBy && (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30">
+                          Resolved by: {escalation.resolvedBy}
+                        </span>
+                      )}
                     </div>
-                  )}
-                  {escalation.addedToKB && (
-                    <div className="mt-3 text-sm text-green-600">
-                      ✓ Added to Knowledge Base as {escalation.kbIntegrationType}
+                    <p className="text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-relaxed whitespace-pre-wrap font-medium">
+                      {escalation.humanAnswer || 'Resolution was finalized and logged by human support desk.'}
+                    </p>
+                    {escalation.resolutionNotes && (
+                      <div className="mt-3 pt-2.5 border-t border-emerald-200 dark:border-emerald-500/20 text-xs">
+                        <span className="text-zinc-500 dark:text-zinc-400 font-mono text-[10px] uppercase tracking-wider block mb-1">Internal Notes:</span>
+                        <p className="text-zinc-800 dark:text-zinc-200 text-xs">{escalation.resolutionNotes}</p>
+                      </div>
+                    )}
+                    {escalation.category && (
+                      <div className="mt-3 pt-2.5 border-t border-emerald-200 dark:border-emerald-500/20 flex items-center gap-2 text-[11px] font-mono text-emerald-800 dark:text-emerald-300">
+                        <span>Category:</span>
+                        <span className="font-semibold">{escalation.category}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Incident Lifecycle & Dispatch Status */}
+                  <div className="p-4 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50/70 dark:bg-white/[0.03]">
+                    <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-3 flex items-center gap-1.5 font-bold">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                      Resolution Lifecycle & Dispatch
+                    </h3>
+                    <div className="space-y-2.5 text-xs">
+                      <div className="flex items-center justify-between py-1.5 border-b border-zinc-200/60 dark:border-white/5">
+                        <span className="text-zinc-500 dark:text-zinc-400 font-mono text-[11px]">Lifecycle Status</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400">
+                          RESOLVED & VERIFIED
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-1.5 border-b border-zinc-200/60 dark:border-white/5">
+                        <span className="text-zinc-500 dark:text-zinc-400 font-mono text-[11px]">Vector Store Sync</span>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-mono text-[11px] font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                          {escalation.addedToKB ? 'Grounded in Pinecone Vector DB' : 'Direct Support Dispatch'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-1.5 border-b border-zinc-200/60 dark:border-white/5">
+                        <span className="text-zinc-500 dark:text-zinc-400 font-mono text-[11px]">Incident Urgency</span>
+                        <span className="font-mono text-[11px] uppercase font-bold text-zinc-700 dark:text-zinc-300">
+                          {escalation.urgency}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-1.5 border-b border-zinc-200/60 dark:border-white/5">
+                        <span className="text-zinc-500 dark:text-zinc-400 font-mono text-[11px]">Database Audit Trail</span>
+                        <span className="font-mono text-[11px] text-zinc-600 dark:text-zinc-300">
+                          PostgreSQL + Redis Cache
+                        </span>
+                      </div>
+                      {escalation.tags && escalation.tags.length > 0 && (
+                        <div className="pt-1">
+                          <span className="text-zinc-500 dark:text-zinc-400 font-mono text-[11px] block mb-1.5">Tagged Keywords:</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {escalation.tags.map((t, idx) => (
+                              <span key={idx} className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-zinc-200/70 dark:bg-white/5 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-white/10">
+                                #{t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 
               {/* Rejected */}
               {escalation.status === 'rejected' && (
-                <div className="bg-red-50 rounded-lg p-4">
-                  <h3 className="font-medium text-red-700 mb-3">❌ Rejected</h3>
-                  <p className="text-gray-700">{escalation.resolutionNotes}</p>
+                <div className="p-4 rounded-xl border border-rose-300 dark:border-rose-500/20 bg-rose-50/80 dark:bg-rose-500/5">
+                  <h3 className="text-xs font-mono uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-2 flex items-center gap-1.5 font-bold">
+                    <XCircle className="w-3.5 h-3.5" />
+                    Incident Rejected
+                  </h3>
+                  <p className="text-xs text-zinc-700 dark:text-zinc-300">{escalation.resolutionNotes || 'No reason provided.'}</p>
                 </div>
               )}
             </div>
@@ -482,29 +530,29 @@ export default function EscalationDetail({
 
         {/* Reject Modal */}
         {showRejectModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold mb-4">Reject Escalation</h3>
+          <div className="fixed inset-0 bg-black/70 dark:bg-black/85 flex items-center justify-center z-60 p-4">
+            <div className="bg-white dark:bg-neutral-950 border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white rounded-xl p-5 w-full max-w-md shadow-2xl">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-3">Reject Escalation</h3>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Reason for rejection..."
-                rows={4}
-                className="w-full px-3 py-2 border rounded mb-4"
+                rows={3}
+                className="w-full px-3 py-2 bg-zinc-50 dark:bg-black/30 border border-zinc-300 dark:border-white/15 rounded-xl text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-rose-500 mb-3 resize-none"
               />
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => setShowRejectModal(false)}
-                  className="px-4 py-2 border rounded hover:bg-gray-50"
+                  className="px-3 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-white/15 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/5 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleReject}
                   disabled={isLoading}
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                  className="px-3 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-700 disabled:opacity-50 cursor-pointer transition-colors"
                 >
-                  Reject
+                  Confirm Rejection
                 </button>
               </div>
             </div>
@@ -514,3 +562,4 @@ export default function EscalationDetail({
     </div>
   );
 }
+

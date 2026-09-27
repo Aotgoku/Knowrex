@@ -148,13 +148,7 @@ export default function ChatInput({
   const canSend = (message.trim().length > 0 || !!attachedImage) && !isLoading && !disabled && !isOverLimit;
 
   return (
-    <div 
-      className="border-t p-4"
-      style={{ 
-        backgroundColor: 'var(--card-bg)',
-        borderColor: 'var(--border-color)'
-      }}
-    >
+    <div className="w-full">
       <div className="max-w-4xl mx-auto">
         {/* Hidden File Input */}
         <input 

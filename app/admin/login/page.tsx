@@ -2,8 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Shield, Headphones, Lock, ArrowRight, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Shield, Headphones, Lock, ArrowRight, ArrowLeft, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import KnowrexLogo from '@/components/KnowrexLogo';
 
 function AdminLoginForm() {
   const router = useRouter();
@@ -63,7 +64,18 @@ function AdminLoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden bg-slate-50 dark:bg-[#030303] text-slate-900 dark:text-zinc-100 selection:bg-indigo-500/30 selection:text-indigo-200">
+      {/* Top Left Return to Overview Button */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 text-xs font-medium text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-all backdrop-blur-md shadow-xs"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Overview</span>
+        </Link>
+      </div>
+
       {/* Dynamic Ambient Background Aura */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute -bottom-20 left-1/4 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
@@ -71,17 +83,16 @@ function AdminLoginForm() {
       <div className="w-full max-w-md relative z-10 animate-in fade-in-up duration-500">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="relative inline-flex items-center justify-center mb-4 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
-            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 flex items-center justify-center shadow-xl border border-white/25">
-              <Lock className="w-7 h-7 text-white" />
+          <div className="inline-flex flex-col items-center justify-center mb-3">
+            <KnowrexLogo size="xl" showWordmark={false} />
+            <div className="mt-3 flex items-center justify-center">
+              <span className="font-instrument text-3xl sm:text-4xl font-normal tracking-tight text-slate-900 dark:text-white">
+                Knowre<span className="text-indigo-600 dark:text-indigo-400 font-semibold">x</span> Workspace
+              </span>
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            Knowrex Workspace
-          </h1>
-          <p className="text-xs sm:text-sm mt-1 text-muted">
-            Role-Based Access Control & Operations Portal
+          <p className="text-[11px] font-mono uppercase tracking-widest mt-1 text-slate-500 dark:text-zinc-400">
+            Role-Based Access Control & Operations
           </p>
         </div>
 

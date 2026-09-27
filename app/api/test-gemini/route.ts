@@ -1,7 +1,26 @@
 import { NextRequest } from 'next/server';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    // 1. Completely disable test endpoint in production
+    if (process.env.NODE_ENV === 'production') {
+      return new Response(
+        JSON.stringify({ error: 'Diagnostics endpoint is disabled in production environments.' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 2. Require Super Admin authentication in development
+    const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+    const user = deserializeSession(sessionCookie);
+    if (!user || user.role !== 'admin') {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Only Super Admins can run API diagnostics.' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (!process.env.GEMINI_API_KEY) {
       return new Response(
         JSON.stringify({ error: 'GEMINI_API_KEY not configured' }),
@@ -13,9 +32,9 @@ export async function GET(request: NextRequest) {
     
     const results: any = {
       apiKeyConfigured: true,
-      apiKeyPrefix: apiKey.substring(0, 10) + '...',
       availableModels: []
     };
+
 
     // List available models
     try {

@@ -63,25 +63,57 @@ export function hasPermission(
   }
 }
 
+import crypto from 'crypto';
+
+const AUTH_SECRET = process.env.AUTH_SECRET || process.env.SESSION_SECRET || 'knowrex-enterprise-auth-hmac-secret-v1-2026';
+
+function signPayload(payload: string): string {
+  return crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
+}
+
 /**
- * Simple, tamper-resistant session serializer for Next.js Edge Middleware & Server
+ * Cryptographically signed session serializer for Next.js Middleware & Server
+ * Token format: <base64payload>.<hmacSignature>
  */
 export function serializeSession(user: AuthUser): string {
   const payload = {
     ...user,
     issuedAt: Date.now()
   };
-  return Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = signPayload(base64Payload);
+  return `${base64Payload}.${signature}`;
 }
 
 /**
- * Deserialize and validate session token from cookie
+ * Deserialize and cryptographically validate session token from cookie
+ * Rejects tampered, forged, or expired tokens
  */
 export function deserializeSession(token?: string | null): AuthUser | null {
-  if (!token) return null;
+  if (!token || typeof token !== 'string') return null;
   try {
-    const jsonStr = Buffer.from(token, 'base64url').toString('utf-8');
+    const parts = token.split('.');
+    if (parts.length !== 2) return null;
+    const [base64Payload, signature] = parts;
+    const expectedSignature = signPayload(base64Payload);
+
+    // Constant-time comparison to prevent timing attacks
+    if (signature.length !== expectedSignature.length) return null;
+    const isValid = crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+    if (!isValid) return null;
+
+    const jsonStr = Buffer.from(base64Payload, 'base64url').toString('utf-8');
     const data = JSON.parse(jsonStr);
+
+    // Verify session age (max 7 days)
+    const MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+    if (data.issuedAt && Date.now() - data.issuedAt > MAX_AGE) {
+      return null;
+    }
+
     if (!data.id || !data.role || !data.email) return null;
     return {
       id: data.id,
@@ -95,3 +127,4 @@ export function deserializeSession(token?: string | null): AuthUser | null {
     return null;
   }
 }
+

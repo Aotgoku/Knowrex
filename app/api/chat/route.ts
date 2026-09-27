@@ -121,6 +121,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (message.length > 8000) {
+      return new Response(
+        JSON.stringify({ error: 'Message exceeds maximum allowed length of 8,000 characters.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Rate Limiting check (Token bucket per client IP)
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || request.headers.get('x-real-ip') || 'anonymous';
     const rateCheck = await checkRateLimit(ip, 35, 60);
@@ -244,7 +251,7 @@ export async function POST(request: NextRequest) {
 
     // Get the model
     const model = client.getGenerativeModel({ 
-      model: 'gemini-2.5-flash'
+      model: 'gemini-3.5-flash'
     });
 
     // ============================================
@@ -625,9 +632,7 @@ INSTRUCTIONS FOR MULTIMODAL DIAGNOSIS:
     });
 
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Chat API Error:', error);
-    }
+    console.error('Chat API Error:', error);
 
     if (error instanceof Error) {
       const errorMsg = error.message.toLowerCase();
@@ -672,7 +677,7 @@ export async function GET() {
       status: 'ok', 
       service: 'Knowrex Chat API',
       provider: 'Google Gemini',
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       features: ['streaming', 'rag', 'sources'],
       configured: !!process.env.GEMINI_API_KEY 
     }),

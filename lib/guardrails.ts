@@ -246,7 +246,7 @@ export async function evaluateOutputFaithfulness(
 
   try {
     const model = ai.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash',
       generationConfig: {
         temperature: 0.1, // Near-zero temperature for deterministic fact checking
         maxOutputTokens: 600,

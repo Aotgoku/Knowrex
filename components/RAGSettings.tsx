@@ -111,54 +111,48 @@ export default function RAGSettingsPanel({
   };
   
   return (
-    <div 
-      className="border rounded-lg overflow-hidden"
-      style={{ 
-        backgroundColor: 'var(--card-bg)',
-        borderColor: 'var(--border-color)'
-      }}
-    >
+    <div className="border border-white/10 dark:border-white/10 rounded-xl overflow-hidden bg-white/[0.02] backdrop-blur-md transition-all">
       {/* Main toggle row */}
-      <div className="flex items-center justify-between p-3">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-3.5 py-2">
+        <div className="flex items-center gap-2.5">
           {/* Toggle button */}
           <button
             onClick={handleToggle}
-            className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
-              settings.enabled ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-600'
+            className={`relative w-8 h-4.5 rounded-full transition-colors duration-200 cursor-pointer ${
+              settings.enabled ? 'bg-indigo-600' : 'bg-white/10'
             }`}
             aria-label={settings.enabled ? 'Disable document search' : 'Enable document search'}
           >
             <span
-              className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                settings.enabled ? 'left-6' : 'left-0.5'
+              className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                settings.enabled ? 'left-4' : 'left-0.5'
               }`}
             />
           </button>
           
           {/* Label */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {settings.enabled ? (
-              <BookOpen className="w-4 h-4 text-indigo-500" />
+              <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
             ) : (
-              <Sparkles className="w-4 h-4" style={{ color: 'var(--muted)' }} />
+              <Sparkles className="w-3.5 h-3.5 text-muted" />
             )}
-            <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+            <span className="text-xs font-medium text-foreground">
               {settings.enabled ? 'Search Documents' : 'General Knowledge'}
             </span>
           </div>
           
           {/* Status indicator */}
           {settings.enabled && isSearching && (
-            <span className="flex items-center gap-1 text-xs text-indigo-500">
+            <span className="flex items-center gap-1 text-[11px] font-mono text-indigo-400">
               <Search className="w-3 h-3 animate-pulse" />
               Searching...
             </span>
           )}
           
           {settings.enabled && !isSearching && documentsCount > 0 && (
-            <span className="text-xs" style={{ color: 'var(--muted)' }}>
-              {documentsCount} document{documentsCount !== 1 ? 's' : ''} available
+            <span className="text-[11px] font-mono text-muted hidden sm:inline">
+              ({documentsCount} indexed)
             </span>
           )}
         </div>
@@ -166,14 +160,14 @@ export default function RAGSettingsPanel({
         {/* Settings button */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-1.5 rounded-md hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
+          className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-white/5 transition-colors cursor-pointer"
           style={{ color: 'var(--muted)' }}
           aria-label="Toggle settings"
         >
           {isExpanded ? (
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           ) : (
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-3.5 h-3.5" />
           )}
         </button>
       </div>

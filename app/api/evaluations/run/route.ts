@@ -3,8 +3,10 @@ import { performRAG, RAGSource } from '@/lib/ragSystem';
 import { evaluateInputGuardrails, evaluateOutputFaithfulness } from '@/lib/guardrails';
 import { EvaluationTestCase, EvaluationTestResult, EvaluationRunSummary } from '@/types/guardrails';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { AUTH_COOKIE_NAME, deserializeSession } from '@/lib/auth';
 
 // Standard Enterprise Benchmark Suites
+
 const BENCHMARK_CASES: EvaluationTestCase[] = [
   {
     id: 'tc-01',
@@ -72,11 +74,22 @@ async function generateWithRetry(model: any, prompt: string, maxRetries = 3): Pr
 }
 
 export async function POST(req: NextRequest) {
+  const sessionCookie = req.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const user = deserializeSession(sessionCookie);
+
+  if (!user || user.role !== 'admin') {
+    return NextResponse.json({
+      success: false,
+      error: 'Unauthorized: Only Super Admins can execute automated evaluation benchmarks.'
+    }, { status: 401 });
+  }
+
   const startTime = Date.now();
   const runId = `eval-${Date.now()}`;
   const testResults: EvaluationTestResult[] = [];
 
   console.log('[Eval Harness] 🔬 Starting automated RAG Triad benchmark run:', runId);
+
 
   for (const testCase of BENCHMARK_CASES) {
     const testStart = Date.now();
@@ -125,7 +138,7 @@ export async function POST(req: NextRequest) {
     const ai = getAI();
     if (ai) {
       try {
-        const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = ai.getGenerativeModel({ model: 'gemini-3.5-flash' });
         const contextStr = ragSources.map(s => `[${s.documentName}]: ${s.text}`).join('\n\n');
         const prompt = `You are Knowrex customer support. Answer strictly using the context if available, or state that no document covers it if not.
 Context:
